@@ -68,7 +68,7 @@ export function leerArgumentos() {
 
 /** Imprime el SQL y cómo usarlo en el panel de Cloudflare (modo --sql). */
 export function imprimirSql(sql, temporal) {
-  console.log('Copia y pega este SQL en Cloudflare: D1 SQL Database > financiera > Console\n')
+  console.log('Copia y pega este SQL en Cloudflare: D1 SQL Database > financiera > Explore Data > Query\n')
   console.log('------------------------------------------------------------------')
   console.log(sql.trim())
   console.log('------------------------------------------------------------------\n')
