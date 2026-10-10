@@ -11,11 +11,13 @@ const enviando = ref(false)
 async function cambiar(evento: FormSubmitEvent<z.output<typeof esquemaCambiarContrasena>>) {
   error.value = ''
   enviando.value = true
+  // Con contraseña temporal se viene del login: al terminar va al inicio; si no, vuelve a "Mi cuenta".
+  const eraTemporal = user.value?.contrasenaTemporal
   try {
     await $fetch('/api/auth/cambiar-contrasena', { method: 'POST', body: evento.data })
     await actualizarSesion()
     toast.add({ title: 'Contraseña actualizada', color: 'success' })
-    await navigateTo('/')
+    await navigateTo(eraTemporal ? '/' : '/mi-cuenta')
   } catch (e) {
     error.value = mensajeDeError(e)
   } finally {

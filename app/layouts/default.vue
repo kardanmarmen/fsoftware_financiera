@@ -43,7 +43,14 @@ async function cerrarSesion() {
           <span class="text-sm text-muted hidden sm:inline">
             {{ user?.nombre }} · {{ user ? NOMBRE_ROL[user.rol] : '' }}
           </span>
-          <UButton to="/cambiar-contrasena" icon="i-lucide-key-round" variant="ghost" color="neutral" aria-label="Cambiar contraseña" />
+          <UButton
+            v-if="!user?.contrasenaTemporal"
+            to="/mi-cuenta"
+            icon="i-lucide-circle-user"
+            variant="ghost"
+            color="neutral"
+            aria-label="Mi cuenta"
+          />
           <UButton icon="i-lucide-log-out" label="Salir" variant="outline" color="neutral" @click="cerrarSesion" />
         </div>
       </UContainer>

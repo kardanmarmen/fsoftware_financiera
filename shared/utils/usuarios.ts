@@ -57,3 +57,6 @@ export const esquemaCambiarContrasena = z
     message: 'La nueva contraseña debe ser distinta a la actual',
     path: ['nueva'],
   })
+
+// "Mi cuenta": solo el Administrador edita su propio nombre (supuesto del análisis 1.1).
+export const esquemaMiCuenta = z.object({ nombre })
