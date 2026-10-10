@@ -22,22 +22,36 @@ export const hashear = (contrasena) => hash.make(contrasena)
 /** Valor de texto para SQL, con las comillas escapadas. */
 export const texto = (valor) => `'${String(valor).replaceAll("'", "''")}'`
 
-/**
- * Ejecuta SQL en D1 (local o en Cloudflare) y devuelve los resultados de cada sentencia.
- * El archivo temporal se borra al terminar porque puede contener hashes de contraseñas.
- */
-export function ejecutarSql(sql, remoto) {
-  const archivo = 'script-temporal.sql'
-  writeFileSync(archivo, sql)
-  const comando = `npx wrangler d1 execute financiera ${remoto ? '--remote' : '--local'} --json --file=${archivo}`
+/** Ejecuta wrangler y devuelve su respuesta JSON. */
+function wrangler(argumentos, remoto) {
+  const comando = `npx wrangler d1 execute financiera ${remoto ? '--remote' : '--local'} --json ${argumentos}`
   const resultado = spawnSync(comando, { shell: true, encoding: 'utf8' })
-  unlinkSync(archivo)
-
   if (resultado.status !== 0) {
     console.error(resultado.stdout || resultado.stderr)
     throw new Error('Falló la ejecución en D1 (¿aplicaste las migraciones?)')
   }
-  return JSON.parse(resultado.stdout)
+  // En remoto, wrangler escribe mensajes de progreso ("Uploading...") antes del JSON.
+  return JSON.parse(resultado.stdout.slice(resultado.stdout.search(/^\[/m)))
+}
+
+/**
+ * Ejecuta sentencias que modifican datos (INSERT, UPDATE). Van en un archivo para que D1 las
+ * ejecute juntas, y el archivo se borra al terminar porque puede contener hashes de contraseñas.
+ * En remoto, D1 no devuelve filas al ejecutar un archivo: para leer datos usa consultarSql().
+ */
+export function ejecutarSql(sql, remoto) {
+  const archivo = 'script-temporal.sql'
+  writeFileSync(archivo, sql)
+  try {
+    return wrangler(`--file=${archivo}`, remoto)
+  } finally {
+    unlinkSync(archivo)
+  }
+}
+
+/** Ejecuta un SELECT y devuelve sus filas. Solo para consultas sin datos sensibles ni comillas dobles. */
+export function consultarSql(sql, remoto) {
+  return wrangler(`--command "${sql}"`, remoto)[0].results
 }
 
 /** Lee los argumentos: <usuario> [nombre] [--remoto] */

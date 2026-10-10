@@ -5,7 +5,7 @@
 //   npm run crear-admin -- <usuario> "<Nombre completo>" --remoto   (base en Cloudflare)
 import { randomUUID } from 'node:crypto'
 import {
-  USUARIO_VALIDO, VIGENCIA_TEMPORAL_MS, ejecutarSql, generarContrasenaTemporal, hashear, leerArgumentos, texto,
+  USUARIO_VALIDO, VIGENCIA_TEMPORAL_MS, consultarSql, ejecutarSql, generarContrasenaTemporal, hashear, leerArgumentos, texto,
 } from './comun.mjs'
 
 const { usuario, nombre, remoto } = leerArgumentos()
@@ -15,18 +15,19 @@ if (!USUARIO_VALIDO.test(usuario) || !nombre) {
   process.exit(1)
 }
 
+if (consultarSql(`SELECT id FROM usuarios WHERE usuario = ${texto(usuario)}`, remoto).length > 0) {
+  console.error(`Ya existe el usuario "${usuario}". Si es un Administrador que olvidó su contraseña, usa:`)
+  console.error(`  npm run restablecer-admin -- ${usuario}${remoto ? ' --remoto' : ''}`)
+  process.exit(1)
+}
+
 const temporal = generarContrasenaTemporal()
 const ahora = Date.now()
 
-try {
-  ejecutarSql(`INSERT INTO usuarios
+ejecutarSql(`INSERT INTO usuarios
   (id, usuario, nombre, rol, gerente_id, contrasena_hash, contrasena_temporal, temporal_expira_en, activo, creado_por, creado_en, actualizado_en)
 VALUES
   (${texto(randomUUID())}, ${texto(usuario)}, ${texto(nombre)}, 'administrador', NULL, ${texto(await hashear(temporal))}, 1, ${ahora + VIGENCIA_TEMPORAL_MS}, 1, NULL, ${ahora}, ${ahora});`, remoto)
-} catch {
-  console.error(`\nNo se pudo crear el Administrador. ¿Ya existe el usuario "${usuario}"?`)
-  process.exit(1)
-}
 
 console.log(`Administrador "${usuario}" creado en la base ${remoto ? 'de Cloudflare' : 'local'}.`)
 console.log(`Contraseña temporal: ${temporal}`)

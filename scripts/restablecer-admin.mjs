@@ -7,7 +7,7 @@
 //   npm run restablecer-admin -- <usuario> --remoto   (base en Cloudflare)
 import { randomUUID } from 'node:crypto'
 import {
-  USUARIO_VALIDO, VIGENCIA_TEMPORAL_MS, ejecutarSql, generarContrasenaTemporal, hashear, leerArgumentos, texto,
+  USUARIO_VALIDO, VIGENCIA_TEMPORAL_MS, consultarSql, ejecutarSql, generarContrasenaTemporal, hashear, leerArgumentos, texto,
 } from './comun.mjs'
 
 const { usuario, remoto } = leerArgumentos()
@@ -16,8 +16,8 @@ if (!USUARIO_VALIDO.test(usuario)) {
   process.exit(1)
 }
 
-const [{ results: encontrados }] = ejecutarSql(
-  `SELECT id FROM usuarios WHERE usuario = ${texto(usuario)} AND rol = 'administrador';`,
+const encontrados = consultarSql(
+  `SELECT id FROM usuarios WHERE usuario = ${texto(usuario)} AND rol = 'administrador'`,
   remoto,
 )
 if (encontrados.length === 0) {
