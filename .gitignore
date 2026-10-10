@@ -34,3 +34,14 @@ desktop.ini
 !.vscode/settings.json
 !.vscode/extensions.json
 *.code-workspace
+
+# Nuxt y Cloudflare
+.nuxt/
+.output/
+.data/
+.wrangler/
+.dev.vars
+.dev.vars.*
+
+# Archivo temporal del script crear-admin
+crear-admin.sql

@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "financiera",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "financiera",
+      // Se reemplaza por el ID real al crear la base en Cloudflare (npx wrangler d1 create financiera).
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "server/db/migraciones"
+    }
+  ]
+}
