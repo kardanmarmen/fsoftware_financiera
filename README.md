@@ -44,17 +44,40 @@ npm run dev                                               # http://localhost:300
 
 Entra con `admin` y la contraseña temporal; el sistema pedirá cambiarla.
 
-Si un Administrador olvida su contraseña (desde el sistema nadie puede restablecérsela):
+## Administradores (scripts)
+
+Desde el sistema no se crean Administradores ni se restablece su contraseña, así que se hace con
+estos scripts. Cada uno muestra una contraseña temporal de 24 horas; al entrar, el sistema pide
+cambiarla.
+
+**Crear un Administrador:**
 
 ```sh
-npm run restablecer-admin -- admin             # base local
-npm run restablecer-admin -- admin --remoto    # base en Cloudflare (requiere wrangler login)
-npm run restablecer-admin -- admin --sql       # solo imprime el SQL
+npm run crear-admin -- admin2 "Nombre Completo"            # base local
+npm run crear-admin -- admin2 "Nombre Completo" --remoto   # base en Cloudflare (requiere wrangler login)
+npm run crear-admin -- admin2 "Nombre Completo" --sql      # solo imprime el SQL
 ```
 
-Con `--sql` (también en `crear-admin`) no se necesita wrangler: el script calcula el hash de la
-contraseña e imprime el SQL para pegarlo en el panel de Cloudflare (**D1 SQL Database → financiera →
-Explore Data → Query**, y luego **Run**).
+**Restablecer la contraseña de un Administrador que la olvidó:**
+
+```sh
+npm run restablecer-admin -- admin2             # base local
+npm run restablecer-admin -- admin2 --remoto    # base en Cloudflare (requiere wrangler login)
+npm run restablecer-admin -- admin2 --sql       # solo imprime el SQL
+```
+
+El nombre va entre comillas si tiene espacios.
+
+**Modo `--sql` (sin wrangler):** el script no se conecta a nada; calcula el hash de la contraseña e
+imprime el SQL. Solo necesita Node.js y el proyecto con `npm install`. Para aplicarlo:
+
+1. En el panel de Cloudflare: **D1 SQL Database → financiera → Explore Data → Query**.
+2. Pega el SQL completo (entre las líneas punteadas) y presiona **Run**. El de restablecer tiene
+   3 sentencias: si solo se ejecuta una, usa la flecha junto a **Run** para ejecutar todas.
+3. Si al crear sale un error de `UNIQUE`, ese usuario ya existe. Si al restablecer no se modifica
+   ninguna fila, ese Administrador no existe.
+
+El SQL impreso contiene el hash de la contraseña: no lo guardes ni lo compartas.
 
 > La primera vez, `npm install` puede avisar que algunos paquetes (`esbuild`, `workerd`, `vue-demi`)
 > tienen scripts de instalación. Ya están aprobados en `package.json` (`allowScripts`).
