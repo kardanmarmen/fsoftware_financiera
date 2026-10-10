@@ -11,10 +11,17 @@ const enlaces = computed(() => {
   ]
 })
 
+const saliendo = ref(false)
+
 async function cerrarSesion() {
-  await $fetch('/api/auth/cerrar-sesion', { method: 'POST' })
-  await actualizarSesion()
-  await navigateTo('/iniciar-sesion')
+  saliendo.value = true // deshabilita el botón: evita enviar el cierre dos veces
+  try {
+    await $fetch('/api/auth/cerrar-sesion', { method: 'POST' })
+    await actualizarSesion()
+    await navigateTo('/iniciar-sesion')
+  } finally {
+    saliendo.value = false
+  }
 }
 </script>
 
@@ -48,7 +55,7 @@ async function cerrarSesion() {
             color="neutral"
             aria-label="Mi cuenta"
           />
-          <UButton icon="i-lucide-log-out" label="Salir" variant="outline" color="neutral" @click="cerrarSesion" />
+          <UButton icon="i-lucide-log-out" label="Salir" variant="outline" color="neutral" :loading="saliendo" @click="cerrarSesion" />
         </div>
       </UContainer>
     </header>
