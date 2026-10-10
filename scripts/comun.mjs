@@ -74,7 +74,7 @@ export function imprimirSql(sql, temporal) {
   console.log('------------------------------------------------------------------\n')
   console.log(`Contraseña temporal: ${temporal}`)
   console.log('Vence en 24 horas desde ahora. Al entrar, el sistema pedirá elegir una contraseña nueva.')
-  console.log('En la consola revisa que diga "Rows written" mayor a 0; si es 0, el usuario no existe.')
+  console.log('Presiona Run (si hay varias sentencias, ejecuta todas). Si no se modificó ninguna fila, el usuario no existe.')
 }
 
 export const USUARIO_VALIDO = /^[a-z0-9._-]{3,30}$/

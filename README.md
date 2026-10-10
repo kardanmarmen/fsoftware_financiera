@@ -54,7 +54,7 @@ npm run restablecer-admin -- admin --sql       # solo imprime el SQL
 
 Con `--sql` (también en `crear-admin`) no se necesita wrangler: el script calcula el hash de la
 contraseña e imprime el SQL para pegarlo en el panel de Cloudflare (**D1 SQL Database → financiera →
-Console**).
+Explore Data → Query**, y luego **Run**).
 
 > La primera vez, `npm install` puede avisar que algunos paquetes (`esbuild`, `workerd`, `vue-demi`)
 > tienen scripts de instalación. Ya están aprobados en `package.json` (`allowScripts`).
