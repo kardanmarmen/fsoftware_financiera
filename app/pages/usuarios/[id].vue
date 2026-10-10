@@ -77,6 +77,27 @@ async function reasignar() {
     confirmarReasignacion.value = false
   }
 }
+
+// --- Restablecer contraseña (solo Administrador, RF08) ---
+const confirmarRestablecer = ref(false)
+const restableciendo = ref(false)
+const temporal = ref<{ usuario: string, contrasenaTemporal: string } | null>(null)
+
+async function restablecer() {
+  restableciendo.value = true
+  try {
+    temporal.value = await $fetch<{ usuario: string, contrasenaTemporal: string }>(
+      `/api/usuarios/${id}/restablecer-contrasena`,
+      { method: 'POST' },
+    )
+    await refresh()
+  } catch (e) {
+    toast.add({ title: 'No se pudo restablecer', description: mensajeDeError(e), color: 'error' })
+  } finally {
+    restableciendo.value = false
+    confirmarRestablecer.value = false
+  }
+}
 </script>
 
 <template>
@@ -133,6 +154,27 @@ async function reasignar() {
           </div>
         </template>
 
+        <template v-if="usuario.puedeRestablecer">
+          <h2 class="font-medium mb-1">Contraseña</h2>
+          <p class="text-sm text-muted mb-2">
+            Si el usuario olvidó su contraseña, genera una temporal y entrégasela en persona.
+          </p>
+          <ContrasenaTemporal
+            v-if="temporal"
+            class="mb-8"
+            :usuario="temporal.usuario"
+            :contrasena="temporal.contrasenaTemporal"
+          />
+          <UButton
+            v-else
+            label="Restablecer contraseña"
+            icon="i-lucide-key-round"
+            variant="outline"
+            class="mb-8"
+            @click="confirmarRestablecer = true"
+          />
+        </template>
+
         <h2 class="font-medium mb-2">Estado de la cuenta</h2>
         <UButton
           v-if="usuario.activo"
@@ -154,6 +196,16 @@ async function reasignar() {
         :color="usuario.activo ? 'error' : 'primary'"
         :cargando="cambiandoEstado"
         @confirmar="cambiarEstado"
+      />
+
+      <Confirmacion
+        v-model:open="confirmarRestablecer"
+        titulo="¿Restablecer contraseña?"
+        :descripcion="`Se generará una contraseña temporal de 24 horas para ${usuario.nombre} y se cerrará su sesión. Su contraseña actual dejará de funcionar.`"
+        etiqueta="Restablecer"
+        color="warning"
+        :cargando="restableciendo"
+        @confirmar="restablecer"
       />
 
       <Confirmacion

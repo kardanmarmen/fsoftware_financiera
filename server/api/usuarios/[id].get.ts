@@ -12,5 +12,6 @@ export default defineEventHandler(async (event) => {
     // La pantalla usa esto para mostrar u ocultar los botones (RNF16).
     puedeAdministrar: puedeAdministrar(actor, objetivo),
     puedeReasignar: actor.rol === 'administrador' && objetivo.rol === 'cobrador',
+    puedeRestablecer: actor.rol === 'administrador' && objetivo.rol !== 'administrador',
   }
 })

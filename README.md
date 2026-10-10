@@ -21,7 +21,7 @@ metodología incremental.
 
 | Incremento | Estado |
 | --- | --- |
-| 1. Usuarios, roles y seguridad | En desarrollo: 1.1 ✅ 1.2 ✅ 1.3 ✅ 1.4 ✅ 1.5 ⏳ |
+| 1. Usuarios, roles y seguridad | ✅ Terminado (1.1 a 1.5) |
 | 2. Base de datos y clientes | Pendiente |
 | 3. Solicitudes y aprobación de créditos | Pendiente |
 | 4. Pagos, abonos y morosidad | Pendiente |
