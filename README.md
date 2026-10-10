@@ -48,8 +48,13 @@ Si un Administrador olvida su contraseña (desde el sistema nadie puede restable
 
 ```sh
 npm run restablecer-admin -- admin             # base local
-npm run restablecer-admin -- admin --remoto    # base en Cloudflare
+npm run restablecer-admin -- admin --remoto    # base en Cloudflare (requiere wrangler login)
+npm run restablecer-admin -- admin --sql       # solo imprime el SQL
 ```
+
+Con `--sql` (también en `crear-admin`) no se necesita wrangler: el script calcula el hash de la
+contraseña e imprime el SQL para pegarlo en el panel de Cloudflare (**D1 SQL Database → financiera →
+Console**).
 
 > La primera vez, `npm install` puede avisar que algunos paquetes (`esbuild`, `workerd`, `vue-demi`)
 > tienen scripts de instalación. Ya están aprobados en `package.json` (`allowScripts`).

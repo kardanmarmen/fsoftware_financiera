@@ -54,12 +54,27 @@ export function consultarSql(sql, remoto) {
   return wrangler(`--command "${sql}"`, remoto)[0].results
 }
 
-/** Lee los argumentos: <usuario> [nombre] [--remoto] */
+/**
+ * Lee los argumentos: <usuario> [nombre] [--remoto | --sql]
+ * --sql: no ejecuta nada; imprime el SQL para pegarlo en la consola de D1 del panel de Cloudflare.
+ */
 export function leerArgumentos() {
   const args = process.argv.slice(2)
   const remoto = args.includes('--remoto')
-  const [usuario = '', nombre] = args.filter((a) => a !== '--remoto')
-  return { usuario: usuario.trim().toLowerCase(), nombre: nombre?.trim(), remoto }
+  const soloSql = args.includes('--sql')
+  const [usuario = '', nombre] = args.filter((a) => !a.startsWith('--'))
+  return { usuario: usuario.trim().toLowerCase(), nombre: nombre?.trim(), remoto, soloSql }
+}
+
+/** Imprime el SQL y cómo usarlo en el panel de Cloudflare (modo --sql). */
+export function imprimirSql(sql, temporal) {
+  console.log('Copia y pega este SQL en Cloudflare: D1 SQL Database > financiera > Console\n')
+  console.log('------------------------------------------------------------------')
+  console.log(sql.trim())
+  console.log('------------------------------------------------------------------\n')
+  console.log(`Contraseña temporal: ${temporal}`)
+  console.log('Vence en 24 horas desde ahora. Al entrar, el sistema pedirá elegir una contraseña nueva.')
+  console.log('En la consola revisa que diga "Rows written" mayor a 0; si es 0, el usuario no existe.')
 }
 
 export const USUARIO_VALIDO = /^[a-z0-9._-]{3,30}$/
