@@ -8,6 +8,13 @@
       "when": 1791609378315,
       "tag": "0000_usuarios_y_bitacora",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1791615830769,
+      "tag": "0001_sesiones",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { check, foreignKey, index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { check, foreignKey, index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 // Ruta relativa (no alias) para que drizzle-kit también pueda leer este archivo.
 import { ROLES } from '../../shared/utils/usuarios'
 
@@ -39,6 +39,39 @@ export const usuarios = sqliteTable(
   ],
 )
 
+export const MOTIVOS_CIERRE = [
+  'salida', // el usuario cerró sesión
+  'nuevo_inicio', // inició sesión en otro dispositivo (RF05)
+  'domingo', // cierre semanal (RF06)
+  'inactividad', // 3 días sin actividad (RF07)
+  'desactivado', // su cuenta fue desactivada (RF04)
+  'restablecimiento', // el Administrador restableció su contraseña (RF08)
+  'cambio_contrasena',
+] as const
+export type MotivoCierre = (typeof MOTIVOS_CIERRE)[number]
+
+export const sesiones = sqliteTable(
+  'sesiones',
+  {
+    id: text('id').primaryKey(),
+    usuarioId: text('usuario_id').notNull().references(() => usuarios.id),
+    creadaEn: integer('creada_en').notNull(),
+    ultimaActividadEn: integer('ultima_actividad_en').notNull(),
+    cerradaEn: integer('cerrada_en'),
+    motivoCierre: text('motivo_cierre', { enum: MOTIVOS_CIERRE }),
+    dispositivo: text('dispositivo'),
+    ip: text('ip'),
+  },
+  (t) => [
+    // RF05 / RN-16: la base de datos impide dos sesiones abiertas de la misma cuenta.
+    uniqueIndex('idx_sesiones_una_abierta').on(t.usuarioId).where(sql`${t.cerradaEn} IS NULL`),
+    check(
+      'motivo_cierre_valido',
+      sql`${t.motivoCierre} IN ('salida', 'nuevo_inicio', 'domingo', 'inactividad', 'desactivado', 'restablecimiento', 'cambio_contrasena')`,
+    ),
+  ],
+)
+
 export const bitacora = sqliteTable(
   'bitacora',
   {
@@ -61,3 +94,4 @@ export const bitacora = sqliteTable(
 )
 
 export type Usuario = typeof usuarios.$inferSelect
+export type Sesion = typeof sesiones.$inferSelect

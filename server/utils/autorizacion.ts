@@ -1,6 +1,5 @@
-import { eq } from 'drizzle-orm'
 import type { H3Event } from 'h3'
-import { usuarios, type Usuario } from '../db/esquema'
+import type { Usuario } from '../db/esquema'
 import type { Rol } from '../../shared/utils/usuarios'
 
 interface Opciones {
@@ -12,20 +11,12 @@ interface Opciones {
 
 /**
  * Verifica la sesión y los permisos al inicio de cada ruta protegida (RF03, RF04).
- * Lee al usuario de la base en cada petición: si lo desactivaron, pierde el acceso al momento.
- * En la tarea 1.4 aquí se agregan las reglas de sesión (única, domingo, inactividad).
+ * La sesión se valida contra la base en cada petición (ver sesiones.ts): cuenta desactivada,
+ * sesión cerrada, cierre dominical o inactividad la invalidan al momento.
  */
 export async function requerirUsuario(event: H3Event, opciones: Opciones = {}): Promise<Usuario> {
-  const { user } = await getUserSession(event)
-  if (!user) {
-    throw createError({ statusCode: 401, message: 'Inicia sesión para continuar' })
-  }
-  const usuario = await usarBd(event).query.usuarios.findFirst({ where: eq(usuarios.id, user.id) })
+  const usuario = await validarSesion(event)
 
-  if (!usuario || !usuario.activo) {
-    await clearUserSession(event)
-    throw createError({ statusCode: 401, message: 'Tu cuenta está desactivada' })
-  }
   if (usuario.contrasenaTemporal && !opciones.permitirTemporal) {
     throw createError({ statusCode: 403, message: 'Debes cambiar tu contraseña antes de continuar' })
   }

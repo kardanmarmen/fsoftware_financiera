@@ -28,6 +28,7 @@ export default defineEventHandler(async (event) => {
 
   await db.batch([
     db.update(usuarios).set({ activo: false, actualizadoEn: Date.now() }).where(eq(usuarios.id, objetivo.id)),
+    cerrarSesionesDe(event, objetivo.id, 'desactivado'), // RN-06
     eventoBitacora(event, {
       usuarioId: actor.id,
       gerenteId: actor.gerenteId,

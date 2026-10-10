@@ -12,6 +12,7 @@ export const NOMBRE_ACCION: Record<string, string> = {
   inicio_sesion: 'Inicio de sesión',
   inicio_sesion_fallido: 'Inicio de sesión fallido',
   cierre_sesion: 'Cierre de sesión',
+  sesion_expirada: 'Cierre automático de sesión',
   usuario_creado: 'Alta de usuario',
   usuario_modificado: 'Modificación de usuario',
   usuario_activado: 'Activación de usuario',
@@ -19,4 +20,10 @@ export const NOMBRE_ACCION: Record<string, string> = {
   cobrador_reasignado: 'Reasignación de Cobrador',
   contrasena_restablecida: 'Restablecimiento de contraseña',
   contrasena_cambiada: 'Cambio de contraseña',
+}
+
+export const NOMBRE_MOTIVO_CIERRE: Record<string, string> = {
+  domingo: 'cierre semanal',
+  inactividad: 'inactividad',
+  desactivado: 'cuenta desactivada',
 }

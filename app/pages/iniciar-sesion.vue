@@ -5,12 +5,16 @@ import type { z } from 'zod'
 definePageMeta({ layout: false })
 
 const { fetch: actualizarSesion } = useUserSession()
+
+// Motivo por el que se cerró la sesión anterior (lo deja el plugin sesion-cerrada).
+const aviso = useState('aviso-sesion', () => '')
 const estado = reactive({ usuario: '', contrasena: '' })
 const error = ref('')
 const enviando = ref(false)
 
 async function iniciarSesion(evento: FormSubmitEvent<z.output<typeof esquemaIniciarSesion>>) {
   error.value = ''
+  aviso.value = ''
   enviando.value = true
   try {
     const { contrasenaTemporal } = await $fetch('/api/auth/iniciar-sesion', {
@@ -44,6 +48,7 @@ async function iniciarSesion(evento: FormSubmitEvent<z.output<typeof esquemaInic
           <UInput v-model="estado.contrasena" type="password" autocomplete="current-password" class="w-full" />
         </UFormField>
 
+        <UAlert v-if="aviso && !error" color="warning" variant="subtle" :description="aviso" />
         <UAlert v-if="error" color="error" variant="subtle" :description="error" />
 
         <UButton type="submit" label="Entrar" block :loading="enviando" />

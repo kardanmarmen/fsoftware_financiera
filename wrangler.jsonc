@@ -4,6 +4,8 @@
   "main": ".output/server/index.mjs",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
+  // Workers Logs: registra cada petición con su tiempo de CPU (panel > Observability).
+  "observability": { "enabled": true },
   "assets": {
     "directory": ".output/public",
     "binding": "ASSETS",

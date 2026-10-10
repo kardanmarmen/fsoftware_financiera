@@ -14,6 +14,14 @@ export default defineNuxtConfig({
     prerender: { routes: ['/'] },
   },
 
+  runtimeConfig: {
+    session: {
+      name: 'sesion',
+      // La cookie vence en 7 días como máximo; la validez real la decide la tabla `sesiones`.
+      maxAge: 60 * 60 * 24 * 7,
+    },
+  },
+
   app: {
     head: {
       htmlAttrs: { lang: 'es-MX' },

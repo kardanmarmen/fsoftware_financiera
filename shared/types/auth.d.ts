@@ -9,6 +9,11 @@ declare module '#auth-utils' {
     rol: Rol
     contrasenaTemporal: boolean
   }
+
+  // Solo lo lee el servidor; nunca se envía al navegador.
+  interface SecureSessionData {
+    sesionId: string
+  }
 }
 
 export {}

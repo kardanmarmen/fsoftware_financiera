@@ -1,10 +1,11 @@
-import { eq } from 'drizzle-orm'
-import { usuarios } from '../../db/esquema'
+import { and, eq, isNull } from 'drizzle-orm'
+import { sesiones, usuarios } from '../../db/esquema'
 
-// RF01, RF02, RF04. La tarea 1.4 agrega la sesión única y los cierres automáticos.
+// RF01, RF02, RF04, RF05
 export default defineEventHandler(async (event) => {
   const datos = await leerCuerpo(event, esquemaIniciarSesion)
-  const usuario = await usarBd(event).query.usuarios.findFirst({ where: eq(usuarios.usuario, datos.usuario) })
+  const db = usarBd(event)
+  const usuario = await db.query.usuarios.findFirst({ where: eq(usuarios.usuario, datos.usuario) })
 
   const valido = usuario?.activo && (await verifyPassword(usuario.contrasenaHash, datos.contrasena))
   if (!usuario || !valido) {
@@ -26,8 +27,23 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await setUserSession(event, { user: datosDeSesion(usuario) })
-  await eventoBitacora(event, { usuarioId: usuario.id, gerenteId: usuario.gerenteId, accion: 'inicio_sesion' })
+  const anterior = await db.query.sesiones.findFirst({
+    where: and(eq(sesiones.usuarioId, usuario.id), isNull(sesiones.cerradaEn)),
+  })
+  const sesion = nuevaSesion(event, usuario.id)
 
+  // RF05: se cierra la sesión anterior y se abre la nueva en la misma operación (RF110).
+  await db.batch([
+    cerrarSesionesDe(event, usuario.id, 'nuevo_inicio'),
+    db.insert(sesiones).values(sesion),
+    eventoBitacora(event, {
+      usuarioId: usuario.id,
+      gerenteId: usuario.gerenteId,
+      accion: 'inicio_sesion',
+      detalle: { dispositivo: sesion.dispositivo, cerroSesionAnterior: Boolean(anterior) },
+    }),
+  ])
+
+  await replaceUserSession(event, { user: datosDeSesion(usuario), secure: { sesionId: sesion.id } })
   return { contrasenaTemporal: usuario.contrasenaTemporal }
 })
