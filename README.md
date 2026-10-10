@@ -44,6 +44,13 @@ npm run dev                                               # http://localhost:300
 
 Entra con `admin` y la contraseña temporal; el sistema pedirá cambiarla.
 
+Si un Administrador olvida su contraseña (desde el sistema nadie puede restablecérsela):
+
+```sh
+npm run restablecer-admin -- admin             # base local
+npm run restablecer-admin -- admin --remoto    # base en Cloudflare
+```
+
 > La primera vez, `npm install` puede avisar que algunos paquetes (`esbuild`, `workerd`, `vue-demi`)
 > tienen scripts de instalación. Ya están aprobados en `package.json` (`allowScripts`).
 
@@ -70,6 +77,6 @@ server/              API y acceso a datos
   db/migraciones/    Archivos .sql generados
   utils/             Permisos, bitácora, conexión a la base, validación
 shared/              Código que usan las páginas y la API (roles, validaciones Zod, formato)
-scripts/             crear-admin.mjs
+scripts/             crear-admin.mjs, restablecer-admin.mjs
 docs/                Análisis y diseño por incremento
 ```

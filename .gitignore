@@ -43,5 +43,5 @@ desktop.ini
 .dev.vars
 .dev.vars.*
 
-# Archivo temporal del script crear-admin
-crear-admin.sql
+# Archivo temporal de los scripts (crear-admin, restablecer-admin)
+script-temporal.sql

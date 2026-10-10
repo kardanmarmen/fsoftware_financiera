@@ -10,7 +10,8 @@
     "db:generar": "drizzle-kit generate",
     "db:migrar:local": "wrangler d1 migrations apply financiera --local",
     "db:migrar:remoto": "wrangler d1 migrations apply financiera --remote",
-    "crear-admin": "node scripts/crear-admin.mjs"
+    "crear-admin": "node scripts/crear-admin.mjs",
+    "restablecer-admin": "node scripts/restablecer-admin.mjs"
   },
   "dependencies": {
     "@nuxt/ui": "^4.11.3",
