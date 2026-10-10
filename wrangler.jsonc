@@ -12,8 +12,7 @@
     {
       "binding": "DB",
       "database_name": "financiera",
-      // Se reemplaza por el ID real al crear la base en Cloudflare (npx wrangler d1 create financiera).
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "7335738d-0e91-407b-a9c6-b291c3d8d313",
       "migrations_dir": "server/db/migraciones"
     }
   ]
