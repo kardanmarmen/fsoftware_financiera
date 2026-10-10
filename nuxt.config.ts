@@ -4,8 +4,14 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   devtools: { enabled: true },
 
+  // Sin SSR: las páginas se sirven como archivos estáticos y el Worker solo atiende /api.
+  // En Cloudflare gratuito ahorra CPU (armar el HTML en el servidor costaba 60–130 ms por página).
+  ssr: false,
+
   nitro: {
     preset: 'cloudflare_module',
+    // Genera index.html al compilar; Cloudflare lo entrega sin ejecutar el Worker.
+    prerender: { routes: ['/'] },
   },
 
   app: {

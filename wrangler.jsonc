@@ -6,7 +6,10 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".output/public",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Cualquier página (/usuarios, /bitacora...) recibe index.html sin ejecutar el Worker;
+    // las peticiones que no son de navegación, como /api, sí llegan al Worker.
+    "not_found_handling": "single-page-application"
   },
   "d1_databases": [
     {
