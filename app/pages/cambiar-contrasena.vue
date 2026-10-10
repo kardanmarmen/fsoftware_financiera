@@ -41,15 +41,15 @@ async function cambiar(evento: FormSubmitEvent<z.output<typeof esquemaCambiarCon
 
     <UForm :schema="esquemaCambiarContrasena" :state="estado" class="space-y-4 mt-4" @submit="cambiar">
       <UFormField :label="user?.contrasenaTemporal ? 'Contraseña temporal' : 'Contraseña actual'" name="actual">
-        <UInput v-model="estado.actual" type="password" autocomplete="current-password" class="w-full" />
+        <CampoContrasena v-model="estado.actual" autocomplete="current-password" class="w-full" />
       </UFormField>
 
       <UFormField label="Nueva contraseña" name="nueva" help="Mínimo 8 caracteres">
-        <UInput v-model="estado.nueva" type="password" autocomplete="new-password" class="w-full" />
+        <CampoContrasena v-model="estado.nueva" autocomplete="new-password" class="w-full" />
       </UFormField>
 
       <UFormField label="Confirma la nueva contraseña" name="confirmacion">
-        <UInput v-model="estado.confirmacion" type="password" autocomplete="new-password" class="w-full" />
+        <CampoContrasena v-model="estado.confirmacion" autocomplete="new-password" class="w-full" />
       </UFormField>
 
       <UAlert v-if="error" color="error" variant="subtle" :description="error" />

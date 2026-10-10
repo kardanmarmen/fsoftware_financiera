@@ -45,7 +45,7 @@ async function iniciarSesion(evento: FormSubmitEvent<z.output<typeof esquemaInic
         </UFormField>
 
         <UFormField label="Contraseña" name="contrasena">
-          <UInput v-model="estado.contrasena" type="password" autocomplete="current-password" class="w-full" />
+          <CampoContrasena v-model="estado.contrasena" autocomplete="current-password" class="w-full" />
         </UFormField>
 
         <UAlert v-if="aviso && !error" color="warning" variant="subtle" :description="aviso" />
