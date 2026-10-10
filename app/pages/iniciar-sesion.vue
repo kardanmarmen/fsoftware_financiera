@@ -6,8 +6,11 @@ definePageMeta({ layout: false })
 
 const { fetch: actualizarSesion } = useUserSession()
 
-// Motivo por el que se cerró la sesión anterior (lo deja el plugin sesion-cerrada).
-const aviso = useState('aviso-sesion', () => '')
+// Motivo por el que se cerró la sesión anterior: el servidor lo deja en una cookie corta.
+// Se lee una vez y se borra, para que no vuelva a aparecer.
+const cookieAviso = useCookie<string | null>(COOKIE_AVISO)
+const aviso = ref(cookieAviso.value ? (MENSAJE_CIERRE[cookieAviso.value] ?? '') : '')
+cookieAviso.value = null
 const estado = reactive({ usuario: '', contrasena: '' })
 const error = ref('')
 const enviando = ref(false)

@@ -11,17 +11,6 @@ export const INACTIVIDAD_MS = 3 * DIA
 /** RN-19: la última actividad se guarda como máximo cada 15 minutos (ahorra escrituras en D1). */
 const ACTUALIZAR_ACTIVIDAD_MS = 15 * MINUTO
 
-/** Mensaje que ve el usuario según el motivo por el que se cerró su sesión (RNF18). */
-const MENSAJE_CIERRE: Record<MotivoCierre, string> = {
-  salida: 'Cerraste sesión. Inicia sesión de nuevo',
-  nuevo_inicio: 'Tu sesión se cerró porque iniciaste sesión en otro dispositivo',
-  domingo: 'Las sesiones se cierran cada domingo. Inicia sesión de nuevo',
-  inactividad: 'Tu sesión se cerró por inactividad. Inicia sesión de nuevo',
-  desactivado: 'Tu cuenta está desactivada',
-  restablecimiento: 'El Administrador restableció tu contraseña. Inicia sesión con la contraseña temporal',
-  cambio_contrasena: 'Tu contraseña cambió. Inicia sesión de nuevo',
-}
-
 /**
  * RF06 / RN-18: momento del último cierre dominical (domingo 03:00, hora del centro de México).
  * México usa UTC−6 todo el año, así que equivale al domingo 09:00 UTC.
@@ -53,10 +42,17 @@ export function nuevaSesion(event: H3Event, usuarioId: string) {
   }
 }
 
-/** Borra la cookie y prepara el error 401 con el mensaje para el usuario. */
-async function rechazar(event: H3Event, mensaje: string) {
+/**
+ * Borra la cookie de sesión y prepara el error 401.
+ * Si la sesión se cerró por un motivo concreto, lo deja en la cookie `aviso_sesion` (legible por el
+ * navegador, dura 2 minutos) para que la página de login lo muestre, también al recargar la página.
+ */
+async function rechazar(event: H3Event, motivo?: MotivoCierre) {
   await clearUserSession(event)
-  return createError({ statusCode: 401, message: mensaje })
+  if (motivo) {
+    setCookie(event, COOKIE_AVISO, motivo, { maxAge: 120, path: '/', sameSite: 'lax', secure: true })
+  }
+  return createError({ statusCode: 401, message: motivo ? MENSAJE_CIERRE[motivo] : 'Inicia sesión para continuar' })
 }
 
 /**
@@ -66,7 +62,7 @@ async function rechazar(event: H3Event, mensaje: string) {
  */
 export async function validarSesion(event: H3Event): Promise<Usuario> {
   const { user, secure } = await getUserSession(event)
-  if (!user || !secure?.sesionId) throw await rechazar(event, 'Inicia sesión para continuar')
+  if (!user || !secure?.sesionId) throw await rechazar(event)
 
   const db = usarBd(event)
   const [fila] = await db
@@ -75,9 +71,9 @@ export async function validarSesion(event: H3Event): Promise<Usuario> {
     .innerJoin(usuarios, eq(sesiones.usuarioId, usuarios.id))
     .where(eq(sesiones.id, secure.sesionId))
 
-  if (!fila || fila.usuario.id !== user.id) throw await rechazar(event, 'Inicia sesión para continuar')
+  if (!fila || fila.usuario.id !== user.id) throw await rechazar(event)
   const { sesion, usuario } = fila
-  if (sesion.cerradaEn) throw await rechazar(event, MENSAJE_CIERRE[sesion.motivoCierre ?? 'salida'])
+  if (sesion.cerradaEn) throw await rechazar(event, sesion.motivoCierre ?? 'salida')
 
   // Reglas de cierre automático, en orden (RF04, RF06, RF07).
   const ahora = Date.now()
@@ -96,7 +92,7 @@ export async function validarSesion(event: H3Event): Promise<Usuario> {
         detalle: { motivo },
       }),
     ])
-    throw await rechazar(event, MENSAJE_CIERRE[motivo])
+    throw await rechazar(event, motivo)
   }
 
   if (ahora - sesion.ultimaActividadEn > ACTUALIZAR_ACTIVIDAD_MS) {

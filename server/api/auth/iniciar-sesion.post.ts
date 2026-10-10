@@ -45,5 +45,6 @@ export default defineEventHandler(async (event) => {
   ])
 
   await replaceUserSession(event, { user: datosDeSesion(usuario), secure: { sesionId: sesion.id } })
+  deleteCookie(event, COOKIE_AVISO, { path: '/' }) // el aviso de una sesión anterior ya no aplica
   return { contrasenaTemporal: usuario.contrasenaTemporal }
 })
