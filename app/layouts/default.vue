@@ -1,17 +1,14 @@
 <script setup lang="ts">
 const { user, fetch: actualizarSesion } = useUserSession()
 
-// RNF16: el menú solo muestra lo que el rol puede usar.
+// RNF16: el menú solo muestra lo que el rol puede usar. "Financiera" (a la izquierda) lleva al inicio.
 const enlaces = computed(() => {
   const rol = user.value?.rol
-  const lista = [{ label: 'Inicio', to: '/', icon: 'i-lucide-house' }]
-  if (rol === 'administrador' || rol === 'gerente') {
-    lista.push(
-      { label: rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios', to: '/usuarios', icon: 'i-lucide-users' },
-      { label: 'Bitácora', to: '/bitacora', icon: 'i-lucide-scroll-text' },
-    )
-  }
-  return lista
+  if (rol !== 'administrador' && rol !== 'gerente') return []
+  return [
+    { label: rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios', to: '/usuarios', icon: 'i-lucide-users' },
+    { label: 'Bitácora', to: '/bitacora', icon: 'i-lucide-scroll-text' },
+  ]
 })
 
 async function cerrarSesion() {
