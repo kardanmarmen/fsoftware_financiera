@@ -24,8 +24,8 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // Pepper de las contraseñas (server/utils/contrasenas.ts). Se define con la variable de entorno
-    // NUXT_CONTRASENA_PEPPER: en .env para desarrollo y como secreto en Cloudflare para producción.
-    contrasenaPepper: '',
+    // NUXT_PASSWORD_PEPPER: en .env para desarrollo y como secreto en Cloudflare para producción.
+    passwordPepper: '',
     session: {
       name: 'sesion',
       // La cookie vence en 7 días como máximo; la validez real la decide la tabla `sesiones`.

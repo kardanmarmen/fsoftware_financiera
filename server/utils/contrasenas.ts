@@ -14,7 +14,7 @@ export function generarContrasenaTemporal() {
 
 // --- Pepper (RNF23) ----------------------------------------------------------------------------
 // Antes de scrypt, la contraseña se firma con HMAC-SHA256 usando una clave secreta (el pepper) que
-// NO está en la base de datos: está en el secreto NUXT_CONTRASENA_PEPPER de Cloudflare (y en .env
+// NO está en la base de datos: está en el secreto NUXT_PASSWORD_PEPPER de Cloudflare (y en .env
 // en desarrollo). Si alguien roba solo la base, los hashes no le sirven para adivinar contraseñas.
 //
 // Los hashes con pepper se guardan con la marca "pepper1$" al inicio. Los que no la tienen (los
@@ -25,16 +25,16 @@ const MARCA_PEPPER = 'pepper1$'
 let claveHmac: { pepper: string, clave: CryptoKey } | undefined
 
 async function aplicarPepper(event: H3Event, contrasena: string) {
-  const { contrasenaPepper } = useRuntimeConfig(event)
-  if (!contrasenaPepper) {
+  const { passwordPepper } = useRuntimeConfig(event)
+  if (!passwordPepper) {
     // Mejor fallar que guardar contraseñas sin la protección del pepper.
-    throw createError({ statusCode: 500, message: 'Falta configurar NUXT_CONTRASENA_PEPPER en el servidor' })
+    throw createError({ statusCode: 500, message: 'Falta configurar NUXT_PASSWORD_PEPPER en el servidor' })
   }
-  if (claveHmac?.pepper !== contrasenaPepper) {
+  if (claveHmac?.pepper !== passwordPepper) {
     const clave = await crypto.subtle.importKey(
-      'raw', new TextEncoder().encode(contrasenaPepper), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
+      'raw', new TextEncoder().encode(passwordPepper), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'],
     )
-    claveHmac = { pepper: contrasenaPepper, clave }
+    claveHmac = { pepper: passwordPepper, clave }
   }
   const firma = await crypto.subtle.sign('HMAC', claveHmac.clave, new TextEncoder().encode(contrasena))
   return btoa(String.fromCharCode(...new Uint8Array(firma)))

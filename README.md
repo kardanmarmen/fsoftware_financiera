@@ -38,11 +38,11 @@ de datos D1 se simula en la carpeta `.wrangler/`.
 Crea el archivo `.env` con dos claves aleatorias (no se suben a git):
 
 ```sh
-node -e "for (const n of ['NUXT_SESSION_PASSWORD', 'NUXT_CONTRASENA_PEPPER']) console.log(n + '=' + require('crypto').randomBytes(32).toString('base64url'))" > .env
+node -e "for (const n of ['NUXT_SESSION_PASSWORD', 'NUXT_PASSWORD_PEPPER']) console.log(n + '=' + require('crypto').randomBytes(32).toString('base64url'))" > .env
 ```
 
 - `NUXT_SESSION_PASSWORD`: cifra la cookie de sesión.
-- `NUXT_CONTRASENA_PEPPER`: clave secreta que se mezcla con las contraseñas antes del hash. En producción
+- `NUXT_PASSWORD_PEPPER`: clave secreta que se mezcla con las contraseñas antes del hash. En producción
   es un secreto de Cloudflare distinto. **Si se pierde, ninguna contraseña con pepper vuelve a funcionar**
   (se recupera el acceso con `restablecer-admin`, que crea contraseñas temporales sin pepper).
 
