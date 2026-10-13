@@ -26,7 +26,7 @@ export function eventoBitacora(event: H3Event, evento: Evento) {
     entidad: evento.entidad ?? null,
     entidadId: evento.entidadId ?? null,
     detalle: evento.detalle ? JSON.stringify(evento.detalle) : null,
-    ip: getRequestHeader(event, 'cf-connecting-ip') ?? getRequestIP(event) ?? null,
+    ip: ipDeLaPeticion(event),
     creadoEn: Date.now(),
   })
 }

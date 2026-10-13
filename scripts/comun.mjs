@@ -5,8 +5,9 @@ import { spawnSync } from 'node:child_process'
 import { Hash } from '@adonisjs/hash'
 import { Scrypt } from '@adonisjs/hash/drivers/scrypt'
 
-// Misma configuración que nuxt-auth-utils, así el hash es compatible con verifyPassword() del servidor.
-const hash = new Hash(new Scrypt({}))
+// Misma configuración que el servidor (nuxt.config.ts > auth.hash.scrypt), así el hash es
+// compatible con verifyPassword() y no hay que volver a calcularlo en el primer inicio de sesión.
+const hash = new Hash(new Scrypt({ cost: 1024 }))
 
 /** RN-12: la contraseña temporal vale 24 horas. */
 export const VIGENCIA_TEMPORAL_MS = 24 * 60 * 60 * 1000

@@ -38,7 +38,7 @@ export function nuevaSesion(event: H3Event, usuarioId: string) {
     creadaEn: ahora,
     ultimaActividadEn: ahora,
     dispositivo: getRequestHeader(event, 'user-agent')?.slice(0, 300) ?? null,
-    ip: getRequestHeader(event, 'cf-connecting-ip') ?? getRequestIP(event) ?? null,
+    ip: ipDeLaPeticion(event),
   }
 }
 

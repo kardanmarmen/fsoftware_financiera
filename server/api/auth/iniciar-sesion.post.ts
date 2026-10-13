@@ -4,6 +4,16 @@ import { sesiones, usuarios } from '../../db/esquema'
 // RF01, RF02, RF04, RF05
 export default defineEventHandler(async (event) => {
   const datos = await leerCuerpo(event, esquemaIniciarSesion)
+
+  // Máximo 5 intentos por minuto por IP y usuario: frena a quien intente adivinar contraseñas.
+  // Se revisa antes de tocar la base y de verificar la contraseña, así un ataque casi no gasta CPU.
+  const { success } = await event.context.cloudflare.env.LIMITE_INICIO_SESION.limit({
+    key: `${ipDeLaPeticion(event)}:${datos.usuario}`,
+  })
+  if (!success) {
+    throw createError({ statusCode: 429, message: 'Demasiados intentos. Espera un minuto y vuelve a intentarlo' })
+  }
+
   const db = usarBd(event)
   const usuario = await db.query.usuarios.findFirst({ where: eq(usuarios.usuario, datos.usuario) })
 
@@ -31,6 +41,14 @@ export default defineEventHandler(async (event) => {
     where: and(eq(sesiones.usuarioId, usuario.id), isNull(sesiones.cerradaEn)),
   })
   const sesion = nuevaSesion(event, usuario.id)
+
+  // Si la contraseña se guardó con otro costo de scrypt (antes era 16384), se vuelve a calcular con
+  // el actual. Pasa una sola vez por usuario; desde ahí su inicio de sesión gasta ~3 ms de CPU.
+  if (passwordNeedsReHash(usuario.contrasenaHash)) {
+    await db.update(usuarios)
+      .set({ contrasenaHash: await hashPassword(datos.contrasena) })
+      .where(eq(usuarios.id, usuario.id))
+  }
 
   // RF05: se cierra la sesión anterior y se abre la nueva en la misma operación (RF110).
   await db.batch([

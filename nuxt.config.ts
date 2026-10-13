@@ -14,6 +14,14 @@ export default defineNuxtConfig({
     prerender: { routes: ['/'] },
   },
 
+  // Costo de scrypt (RNF23). 1024 verifica una contraseña en ~3 ms, dentro del límite de 10 ms de
+  // CPU del plan gratuito de Cloudflare (con el valor por defecto, 16384, tardaba ~50 ms).
+  // Lo compensa el límite de intentos de inicio de sesión (wrangler.jsonc > ratelimits).
+  // Debe coincidir con scripts/comun.mjs.
+  auth: {
+    hash: { scrypt: { cost: 1024 } },
+  },
+
   runtimeConfig: {
     session: {
       name: 'sesion',

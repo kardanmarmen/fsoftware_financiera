@@ -13,6 +13,10 @@
     // las peticiones que no son de navegación, como /api, sí llegan al Worker.
     "not_found_handling": "single-page-application"
   },
+  // Límite de intentos de inicio de sesión: 5 por minuto por IP y usuario (server/api/auth/iniciar-sesion.post.ts).
+  "ratelimits": [
+    { "name": "LIMITE_INICIO_SESION", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
