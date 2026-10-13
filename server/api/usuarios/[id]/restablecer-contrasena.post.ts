@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     db
       .update(usuarios)
       .set({
-        contrasenaHash: await hashPassword(contrasenaTemporal),
+        contrasenaHash: await hashearContrasena(event, contrasenaTemporal),
         contrasenaTemporal: true,
         temporalExpiraEn: ahora + VIGENCIA_TEMPORAL_MS,
         actualizadoEn: ahora,

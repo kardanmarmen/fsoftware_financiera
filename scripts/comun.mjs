@@ -5,8 +5,11 @@ import { spawnSync } from 'node:child_process'
 import { Hash } from '@adonisjs/hash'
 import { Scrypt } from '@adonisjs/hash/drivers/scrypt'
 
-// Misma configuración que el servidor (nuxt.config.ts > auth.hash.scrypt), así el hash es
-// compatible con verifyPassword() y no hay que volver a calcularlo en el primer inicio de sesión.
+// Mismo costo que el servidor (nuxt.config.ts > auth.hash.scrypt).
+// A propósito NO se usa el pepper: los scripts crean contraseñas temporales sin él, y el servidor
+// las acepta y les agrega el pepper en el primer inicio de sesión (server/utils/contrasenas.ts).
+// Así los scripts no necesitan el secreto, y siguen sirviendo para recuperar el acceso de un
+// Administrador aunque el pepper se pierda.
 const hash = new Hash(new Scrypt({ cost: 1024 }))
 
 /** RN-12: la contraseña temporal vale 24 horas. */

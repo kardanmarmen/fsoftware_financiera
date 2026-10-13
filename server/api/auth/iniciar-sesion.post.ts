@@ -17,8 +17,10 @@ export default defineEventHandler(async (event) => {
   const db = usarBd(event)
   const usuario = await db.query.usuarios.findFirst({ where: eq(usuarios.usuario, datos.usuario) })
 
-  const valido = usuario?.activo && (await verifyPassword(usuario.contrasenaHash, datos.contrasena))
-  if (!usuario || !valido) {
+  const verificacion = usuario?.activo
+    ? await verificarContrasena(event, usuario.contrasenaHash, datos.contrasena)
+    : { valido: false, debeActualizar: false }
+  if (!usuario || !verificacion.valido) {
     await eventoBitacora(event, {
       usuarioId: usuario?.id,
       gerenteId: usuario?.gerenteId,
@@ -42,11 +44,11 @@ export default defineEventHandler(async (event) => {
   })
   const sesion = nuevaSesion(event, usuario.id)
 
-  // Si la contraseña se guardó con otro costo de scrypt (antes era 16384), se vuelve a calcular con
-  // el actual. Pasa una sola vez por usuario; desde ahí su inicio de sesión gasta ~3 ms de CPU.
-  if (passwordNeedsReHash(usuario.contrasenaHash)) {
+  // Si el hash es de un formato anterior (sin pepper o con otro costo de scrypt), se vuelve a
+  // guardar con el actual. Pasa una sola vez por usuario.
+  if (verificacion.debeActualizar) {
     await db.update(usuarios)
-      .set({ contrasenaHash: await hashPassword(datos.contrasena) })
+      .set({ contrasenaHash: await hashearContrasena(event, datos.contrasena) })
       .where(eq(usuarios.id, usuario.id))
   }
 

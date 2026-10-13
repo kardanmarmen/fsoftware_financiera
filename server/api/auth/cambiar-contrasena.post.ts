@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const usuario = await requerirUsuario(event, { permitirTemporal: true })
   const datos = await leerCuerpo(event, esquemaCambiarContrasena)
 
-  if (!(await verifyPassword(usuario.contrasenaHash, datos.actual))) {
+  if (!(await verificarContrasena(event, usuario.contrasenaHash, datos.actual)).valido) {
     throw createError({ statusCode: 400, message: 'La contraseña actual no es correcta' })
   }
   if (usuario.contrasenaTemporal && (usuario.temporalExpiraEn ?? 0) < Date.now()) {
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
     db
       .update(usuarios)
       .set({
-        contrasenaHash: await hashPassword(datos.nueva),
+        contrasenaHash: await hashearContrasena(event, datos.nueva),
         contrasenaTemporal: false,
         temporalExpiraEn: null,
         actualizadoEn: Date.now(),

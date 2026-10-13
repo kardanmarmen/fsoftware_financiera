@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
         nombre: datos.nombre,
         rol: datos.rol,
         gerenteId,
-        contrasenaHash: await hashPassword(contrasenaTemporal),
+        contrasenaHash: await hashearContrasena(event, contrasenaTemporal),
         contrasenaTemporal: true,
         temporalExpiraEn: ahora + VIGENCIA_TEMPORAL_MS,
         creadoPor: actor.id,
