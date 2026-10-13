@@ -37,6 +37,13 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'es-MX' },
       title: 'Financiera',
+      // Íconos (public/). Cloudflare los entrega sin
+      // ejecutar el Worker. icono-192/512 y el maskable se usarán en el manifiesto de la app.
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico', sizes: '32x32' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      ],
     },
   },
 })
