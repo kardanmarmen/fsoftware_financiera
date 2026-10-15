@@ -64,7 +64,10 @@ export default defineEventHandler(async (event) => {
     }),
   ])
 
-  await replaceUserSession(event, { user: datosDeSesion(usuario), secure: { sesionId: sesion.id } })
-  deleteCookie(event, COOKIE_AVISO, { path: '/' }) // el aviso de una sesión anterior ya no aplica
+  // setUserSession (y no replaceUserSession) escribe la cookie una sola vez: replace la borra y la
+  // vuelve a crear. Da lo mismo porque siempre se guardan todos los campos (user y sesionId).
+  await setUserSession(event, { user: datosDeSesion(usuario), secure: { sesionId: sesion.id } })
+  // El aviso de una sesión anterior ya no aplica. Solo se borra si existe: cada cookie escrita cuesta CPU.
+  if (getCookie(event, COOKIE_AVISO)) deleteCookie(event, COOKIE_AVISO, { path: '/' })
   return { contrasenaTemporal: usuario.contrasenaTemporal }
 })
