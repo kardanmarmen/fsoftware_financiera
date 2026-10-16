@@ -26,7 +26,7 @@ async function cerrarSesion() {
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-dvh">
     <header class="border-b border-default">
       <UContainer class="flex flex-wrap items-center gap-2 py-3">
         <NuxtLink to="/" class="font-semibold mr-4">Financiera</NuxtLink>

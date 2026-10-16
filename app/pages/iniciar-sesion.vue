@@ -35,7 +35,7 @@ async function iniciarSesion(evento: FormSubmitEvent<z.output<typeof esquemaInic
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center p-4">
+  <div class="min-h-dvh flex items-center justify-center p-4">
     <UCard class="w-full max-w-sm">
       <template #header>
         <h1 class="text-lg font-semibold">Financiera</h1>
