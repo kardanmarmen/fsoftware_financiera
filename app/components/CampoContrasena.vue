@@ -2,6 +2,7 @@
 // Campo de contraseña con botón para mostrarla u ocultarla (usabilidad, RNF15).
 // Solo cambia cómo se ve en la pantalla del usuario: lo que se envía al servidor es lo mismo.
 // Los atributos extra (autocomplete, etc.) pasan directo al input.
+// El botón no recibe el foco con Tab (tabindex -1): Tab salta de la contraseña al siguiente campo.
 defineOptions({ inheritAttrs: false })
 
 const valor = defineModel<string>({ default: '' })
@@ -18,6 +19,7 @@ const visible = ref(false)
         color="neutral"
         variant="link"
         size="sm"
+        tabindex="-1"
         @click="visible = !visible"
       />
     </template>
