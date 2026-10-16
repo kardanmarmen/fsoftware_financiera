@@ -31,7 +31,8 @@ async function cerrarSesion() {
       <UContainer class="flex flex-wrap items-center gap-2 py-3">
         <NuxtLink to="/" class="font-semibold mr-4">Financiera</NuxtLink>
 
-        <nav v-if="!user?.contrasenaTemporal" class="flex flex-wrap gap-1">
+        <!-- En el celular el menú baja a su propia fila; en pantallas grandes va junto a "Financiera" -->
+        <nav v-if="!user?.contrasenaTemporal" class="order-last w-full flex flex-wrap gap-1 sm:order-none sm:w-auto">
           <UButton
             v-for="enlace in enlaces"
             :key="enlace.to"
