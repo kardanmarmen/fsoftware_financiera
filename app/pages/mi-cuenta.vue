@@ -28,7 +28,7 @@ async function guardar(evento: FormSubmitEvent<z.output<typeof esquemaMiCuenta>>
 
 <template>
   <div class="max-w-md">
-    <h1 class="text-xl font-semibold mb-4">Mi cuenta</h1>
+    <EncabezadoPagina titulo="Mi cuenta" />
 
     <UCard v-if="cuenta" class="mb-6">
       <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

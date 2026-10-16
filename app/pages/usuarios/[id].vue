@@ -107,14 +107,13 @@ async function restablecer() {
     <UAlert v-if="errorCarga" color="error" variant="subtle" :description="mensajeDeError(errorCarga)" />
 
     <template v-else-if="usuario">
-      <div class="flex flex-wrap items-center gap-2 mb-4">
-        <h1 class="text-xl font-semibold">{{ usuario.nombre }}</h1>
+      <EncabezadoPagina :titulo="usuario.nombre">
         <UBadge
           :label="usuario.activo ? 'Activo' : 'Desactivado'"
           :color="usuario.activo ? 'success' : 'neutral'"
           variant="subtle"
         />
-      </div>
+      </EncabezadoPagina>
 
       <UCard class="mb-6">
         <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">

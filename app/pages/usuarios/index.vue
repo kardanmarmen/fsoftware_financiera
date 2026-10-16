@@ -43,10 +43,9 @@ const columnas = computed(() => {
 
 <template>
   <div>
-    <div class="flex flex-wrap items-center gap-3 mb-4">
-      <h1 class="text-xl font-semibold">{{ esAdmin ? 'Usuarios' : 'Mis Cobradores' }}</h1>
+    <EncabezadoPagina :titulo="esAdmin ? 'Usuarios' : 'Mis Cobradores'">
       <UButton to="/usuarios/nuevo" icon="i-lucide-plus" label="Nuevo" class="ml-auto" />
-    </div>
+    </EncabezadoPagina>
 
     <UInput v-model="busqueda" icon="i-lucide-search" placeholder="Buscar por nombre o usuario" class="w-full max-w-sm mb-3" />
 

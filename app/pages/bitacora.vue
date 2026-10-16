@@ -31,7 +31,7 @@ const columnas: TableColumn<Registro>[] = [
 
 <template>
   <div>
-    <h1 class="text-xl font-semibold mb-4">Bitácora</h1>
+    <EncabezadoPagina titulo="Bitácora" />
 
     <UTable :data="data?.registros ?? []" :columns="columnas" :loading="status === 'pending'" empty="Sin registros" />
 

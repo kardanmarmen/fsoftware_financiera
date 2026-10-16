@@ -4,8 +4,7 @@ const { user } = useUserSession()
 
 <template>
   <div>
-    <h1 class="text-xl font-semibold">Hola, {{ user?.nombre }}</h1>
-    <p class="text-muted">{{ user ? NOMBRE_ROL[user.rol] : '' }}</p>
+    <EncabezadoPagina :titulo="`Hola, ${user?.nombre ?? ''}`" :descripcion="user ? NOMBRE_ROL[user.rol] : ''" />
 
     <div v-if="user?.rol !== 'cobrador'" class="grid gap-4 sm:grid-cols-2 mt-6 max-w-2xl">
       <UCard>

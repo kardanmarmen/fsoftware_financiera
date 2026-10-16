@@ -44,7 +44,7 @@ async function crear(evento: FormSubmitEvent<Datos>) {
 <template>
   <div class="max-w-md">
     <UButton to="/usuarios" icon="i-lucide-arrow-left" label="Volver" variant="link" color="neutral" class="px-0 mb-2" />
-    <h1 class="text-xl font-semibold mb-4">{{ esAdmin ? 'Nuevo usuario' : 'Nuevo Cobrador' }}</h1>
+    <EncabezadoPagina :titulo="esAdmin ? 'Nuevo usuario' : 'Nuevo Cobrador'" />
 
     <div v-if="creado" class="space-y-4">
       <ContrasenaTemporal :usuario="creado.usuario" :contrasena="creado.contrasenaTemporal" />

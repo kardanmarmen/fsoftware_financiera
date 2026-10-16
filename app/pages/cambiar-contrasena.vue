@@ -28,7 +28,7 @@ async function cambiar(evento: FormSubmitEvent<z.output<typeof esquemaCambiarCon
 
 <template>
   <div class="max-w-md">
-    <h1 class="text-xl font-semibold mb-1">Cambiar contraseña</h1>
+    <EncabezadoPagina titulo="Cambiar contraseña" />
 
     <UAlert
       v-if="user?.contrasenaTemporal"
