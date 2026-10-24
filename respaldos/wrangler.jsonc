@@ -13,14 +13,12 @@
     "BASE_DATOS_ID": "7335738d-0e91-407b-a9c6-b291c3d8d313"
   },
   "workflows": [
-    {
-      "name": "respaldo-semanal",
-      "binding": "FLUJO_RESPALDO",
-      "class_name": "FlujoRespaldo",
-      // Domingo 09:30 UTC = 03:30 en el centro de México, después del cierre semanal de sesiones (RF06)
-      "schedules": ["30 9 * * SUN"]
-    }
+    { "name": "respaldo-semanal", "binding": "FLUJO_RESPALDO", "class_name": "FlujoRespaldo" }
   ],
+  // Domingo 09:30 UTC = 03:30 en el centro de México, después del cierre semanal de sesiones (RF06).
+  // Es un Cron Trigger del Worker (gratuito), que inicia el Workflow; programar el Workflow
+  // directamente ("schedules") solo está disponible en el plan de pago.
+  "triggers": { "crons": ["30 9 * * SUN"] },
   "d1_databases": [
     { "binding": "DB", "database_name": "financiera", "database_id": "7335738d-0e91-407b-a9c6-b291c3d8d313" }
   ],

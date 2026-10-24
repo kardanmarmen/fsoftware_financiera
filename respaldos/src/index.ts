@@ -1,6 +1,6 @@
 // Respaldo semanal de la base de datos (RF117–RF121). Ver docs/incremento-2/2.7-respaldo-de-datos.md
 //
-// Cada semana Cloudflare inicia este Workflow (ver "schedules" en wrangler.jsonc):
+// Cada domingo la tarea programada del Worker (ver "triggers" en wrangler.jsonc) inicia este Workflow:
 //   1. Registra el respaldo en la tabla `respaldos` como "en_proceso".
 //   2. Pide a la API de D1 que exporte la base de datos completa (archivo .sql).
 //   3. Espera a que la exportación esté lista y la guarda en R2, separada de la base (RF121).
@@ -96,8 +96,12 @@ function mensaje(r: RespuestaExportacion) {
   return r.errors?.map((e) => e.message).join('; ') || 'sin detalle'
 }
 
-// Este Worker no atiende páginas: solo existe para el Workflow programado.
 export default {
+  // La tarea programada de cada domingo (triggers.crons en wrangler.jsonc) inicia el Workflow
+  async scheduled(_controlador: ScheduledController, env: Env) {
+    await env.FLUJO_RESPALDO.create()
+  },
+  // Este Worker no atiende páginas
   async fetch() {
     return new Response('No encontrado', { status: 404 })
   },
