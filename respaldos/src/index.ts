@@ -19,11 +19,20 @@ interface Env {
   TOKEN_EXPORTAR_D1: string // secreto: npx wrangler secret put TOKEN_EXPORTAR_D1
 }
 
+// Respuesta de la API de exportación. La dirección de descarga viene en result.result cuando
+// status es "complete" (igual que la lee `wrangler d1 export`).
 interface RespuestaExportacion {
   success: boolean
   errors?: { message: string }[]
-  result?: { at_bookmark?: string, status?: string, signed_url?: string, error?: string }
+  result?: {
+    at_bookmark?: string
+    status?: 'active' | 'complete' | 'error'
+    error?: string
+    result?: { signed_url?: string, filename?: string }
+  }
 }
+
+const espera = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms))
 
 export class FlujoRespaldo extends WorkflowEntrypoint<Env> {
   async run(_evento: WorkflowEvent<unknown>, paso: WorkflowStep) {
@@ -42,17 +51,31 @@ export class FlujoRespaldo extends WorkflowEntrypoint<Env> {
         return r.result.at_bookmark
       })
 
-      // La exportación tarda unos segundos o minutos; si aún no está lista, el paso falla y
-      // Workflows lo reintenta con espera creciente.
+      // Se consulta el avance cada 3 segundos, enviando siempre el marcador más reciente (así lo
+      // hace `wrangler d1 export`). Si en 2 minutos no termina, el paso falla y Workflows lo reintenta.
+      const direccion = await paso.do(
+        'esperar exportación',
+        { retries: { limit: 5, delay: '30 seconds', backoff: 'exponential' }, timeout: '5 minutes' },
+        async () => {
+          let actual = marcador
+          for (let intento = 0; intento < 40; intento++) {
+            const r = await this.exportar({ output_format: 'polling', current_bookmark: actual })
+            if (!r.success) throw new Error(`La API rechazó la consulta: ${mensaje(r)}`)
+            if (r.result?.status === 'error') throw new Error(`La exportación falló: ${r.result.error ?? mensaje(r)}`)
+            if (r.result?.status === 'complete' && r.result.result?.signed_url) return r.result.result.signed_url
+            actual = r.result?.at_bookmark ?? actual
+            await espera(3000)
+          }
+          throw new Error('La exportación todavía no está lista')
+        },
+      )
+
+      // La dirección de descarga vale una hora; se descarga y se guarda en R2 en un paso aparte
       const archivo = await paso.do(
         'guardar en R2',
-        { retries: { limit: 10, delay: '15 seconds', backoff: 'exponential' }, timeout: '10 minutes' },
+        { retries: { limit: 3, delay: '30 seconds', backoff: 'exponential' } },
         async () => {
-          const r = await this.exportar({ current_bookmark: marcador })
-          if (r.result?.status === 'error') throw new Error(`La exportación falló: ${r.result.error ?? mensaje(r)}`)
-          if (!r.result?.signed_url) throw new Error('La exportación todavía no está lista')
-
-          const descarga = await fetch(r.result.signed_url)
+          const descarga = await fetch(direccion)
           if (!descarga.ok || !descarga.body) throw new Error(`No se pudo descargar la exportación (${descarga.status})`)
 
           // d1/2026-10-25-0930.sql: el nombre lleva la fecha (UTC), así se ordenan solos
