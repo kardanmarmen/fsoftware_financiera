@@ -1,0 +1,1684 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "418148ca-e57e-4f5d-8133-67632dc3fbc1",
+  "prevId": "e595a5e1-4029-4a6a-b4a3-aa10167eaca9",
+  "tables": {
+    "bitacora": {
+      "name": "bitacora",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "gerente_id": {
+          "name": "gerente_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "usuario_intentado": {
+          "name": "usuario_intentado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "accion": {
+          "name": "accion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "entidad": {
+          "name": "entidad",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "entidad_id": {
+          "name": "entidad_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "detalle": {
+          "name": "detalle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_bitacora_fecha": {
+          "name": "idx_bitacora_fecha",
+          "columns": [
+            "creado_en"
+          ],
+          "isUnique": false
+        },
+        "idx_bitacora_usuario": {
+          "name": "idx_bitacora_usuario",
+          "columns": [
+            "usuario_id",
+            "creado_en"
+          ],
+          "isUnique": false
+        },
+        "idx_bitacora_gerente": {
+          "name": "idx_bitacora_gerente",
+          "columns": [
+            "gerente_id",
+            "creado_en"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "bitacora_usuario_id_usuarios_id_fk": {
+          "name": "bitacora_usuario_id_usuarios_id_fk",
+          "tableFrom": "bitacora",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "calendario_pagos": {
+      "name": "calendario_pagos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "credito_id": {
+          "name": "credito_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "semana": {
+          "name": "semana",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha_vencimiento": {
+          "name": "fecha_vencimiento",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "monto_centavos": {
+          "name": "monto_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cubierto_centavos": {
+          "name": "cubierto_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "calendario_semana_unica": {
+          "name": "calendario_semana_unica",
+          "columns": [
+            "credito_id",
+            "semana"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "calendario_pagos_credito_id_creditos_id_fk": {
+          "name": "calendario_pagos_credito_id_creditos_id_fk",
+          "tableFrom": "calendario_pagos",
+          "tableTo": "creditos",
+          "columnsFrom": [
+            "credito_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "semana_positiva": {
+          "name": "semana_positiva",
+          "value": "\"calendario_pagos\".\"semana\" > 0"
+        },
+        "monto_semana_positivo": {
+          "name": "monto_semana_positivo",
+          "value": "\"calendario_pagos\".\"monto_centavos\" > 0"
+        },
+        "cubierto_hasta_monto": {
+          "name": "cubierto_hasta_monto",
+          "value": "\"calendario_pagos\".\"cubierto_centavos\" BETWEEN 0 AND \"calendario_pagos\".\"monto_centavos\""
+        }
+      }
+    },
+    "clientes": {
+      "name": "clientes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "curp": {
+          "name": "curp",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "apellido_paterno": {
+          "name": "apellido_paterno",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "apellido_materno": {
+          "name": "apellido_materno",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "nombre_busqueda": {
+          "name": "nombre_busqueda",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fecha_nacimiento": {
+          "name": "fecha_nacimiento",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "telefono_alterno": {
+          "name": "telefono_alterno",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "calle": {
+          "name": "calle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "numero_exterior": {
+          "name": "numero_exterior",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "numero_interior": {
+          "name": "numero_interior",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "colonia": {
+          "name": "colonia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "municipio": {
+          "name": "municipio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "codigo_postal": {
+          "name": "codigo_postal",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "referencias_domicilio": {
+          "name": "referencias_domicilio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cobrador_id": {
+          "name": "cobrador_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "clientes_curp_unique": {
+          "name": "clientes_curp_unique",
+          "columns": [
+            "curp"
+          ],
+          "isUnique": true
+        },
+        "idx_clientes_cobrador": {
+          "name": "idx_clientes_cobrador",
+          "columns": [
+            "cobrador_id"
+          ],
+          "isUnique": false
+        },
+        "idx_clientes_nombre": {
+          "name": "idx_clientes_nombre",
+          "columns": [
+            "nombre_busqueda"
+          ],
+          "isUnique": false
+        },
+        "idx_clientes_telefono": {
+          "name": "idx_clientes_telefono",
+          "columns": [
+            "telefono"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "clientes_cobrador_id_usuarios_id_fk": {
+          "name": "clientes_cobrador_id_usuarios_id_fk",
+          "tableFrom": "clientes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "cobrador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "clientes_creado_por_usuarios_id_fk": {
+          "name": "clientes_creado_por_usuarios_id_fk",
+          "tableFrom": "clientes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "curp_longitud": {
+          "name": "curp_longitud",
+          "value": "LENGTH(\"clientes\".\"curp\") = 18"
+        },
+        "codigo_postal_longitud": {
+          "name": "codigo_postal_longitud",
+          "value": "LENGTH(\"clientes\".\"codigo_postal\") = 5"
+        }
+      }
+    },
+    "cobrador_modelos": {
+      "name": "cobrador_modelos",
+      "columns": {
+        "cobrador_id": {
+          "name": "cobrador_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "modelo_id": {
+          "name": "modelo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "asignado_por": {
+          "name": "asignado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "asignado_en": {
+          "name": "asignado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "cobrador_modelos_cobrador_id_usuarios_id_fk": {
+          "name": "cobrador_modelos_cobrador_id_usuarios_id_fk",
+          "tableFrom": "cobrador_modelos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "cobrador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cobrador_modelos_modelo_id_modelos_credito_id_fk": {
+          "name": "cobrador_modelos_modelo_id_modelos_credito_id_fk",
+          "tableFrom": "cobrador_modelos",
+          "tableTo": "modelos_credito",
+          "columnsFrom": [
+            "modelo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "cobrador_modelos_asignado_por_usuarios_id_fk": {
+          "name": "cobrador_modelos_asignado_por_usuarios_id_fk",
+          "tableFrom": "cobrador_modelos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "asignado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cobrador_modelos_cobrador_id_modelo_id_pk": {
+          "columns": [
+            "cobrador_id",
+            "modelo_id"
+          ],
+          "name": "cobrador_modelos_cobrador_id_modelo_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "creditos": {
+      "name": "creditos",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "folio": {
+          "name": "folio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "solicitud_id": {
+          "name": "solicitud_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cobrador_id": {
+          "name": "cobrador_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "modelo_id": {
+          "name": "modelo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "monto_centavos": {
+          "name": "monto_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tasa_interes_bp": {
+          "name": "tasa_interes_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plazo_semanas": {
+          "name": "plazo_semanas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mora_semanal_centavos": {
+          "name": "mora_semanal_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "interes_centavos": {
+          "name": "interes_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "total_centavos": {
+          "name": "total_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pago_semanal_centavos": {
+          "name": "pago_semanal_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "saldo_centavos": {
+          "name": "saldo_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'aprobado'"
+        },
+        "fecha_desembolso": {
+          "name": "fecha_desembolso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "aceptado_en": {
+          "name": "aceptado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "liquidado_en": {
+          "name": "liquidado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tipo_liquidacion": {
+          "name": "tipo_liquidacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "creditos_folio_unique": {
+          "name": "creditos_folio_unique",
+          "columns": [
+            "folio"
+          ],
+          "isUnique": true
+        },
+        "creditos_solicitud_id_unique": {
+          "name": "creditos_solicitud_id_unique",
+          "columns": [
+            "solicitud_id"
+          ],
+          "isUnique": true
+        },
+        "idx_creditos_cliente": {
+          "name": "idx_creditos_cliente",
+          "columns": [
+            "cliente_id",
+            "estado"
+          ],
+          "isUnique": false
+        },
+        "idx_creditos_cobrador": {
+          "name": "idx_creditos_cobrador",
+          "columns": [
+            "cobrador_id",
+            "estado"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "creditos_solicitud_id_solicitudes_id_fk": {
+          "name": "creditos_solicitud_id_solicitudes_id_fk",
+          "tableFrom": "creditos",
+          "tableTo": "solicitudes",
+          "columnsFrom": [
+            "solicitud_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "creditos_cliente_id_clientes_id_fk": {
+          "name": "creditos_cliente_id_clientes_id_fk",
+          "tableFrom": "creditos",
+          "tableTo": "clientes",
+          "columnsFrom": [
+            "cliente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "creditos_cobrador_id_usuarios_id_fk": {
+          "name": "creditos_cobrador_id_usuarios_id_fk",
+          "tableFrom": "creditos",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "cobrador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "creditos_modelo_id_modelos_credito_id_fk": {
+          "name": "creditos_modelo_id_modelos_credito_id_fk",
+          "tableFrom": "creditos",
+          "tableTo": "modelos_credito",
+          "columnsFrom": [
+            "modelo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "estado_credito_valido": {
+          "name": "estado_credito_valido",
+          "value": "\"creditos\".\"estado\" IN ('aprobado', 'aceptado', 'liquidado', 'cancelado')"
+        },
+        "tipo_liquidacion_valido": {
+          "name": "tipo_liquidacion_valido",
+          "value": "\"creditos\".\"tipo_liquidacion\" IN ('normal', 'anticipada')"
+        },
+        "monto_credito_positivo": {
+          "name": "monto_credito_positivo",
+          "value": "\"creditos\".\"monto_centavos\" > 0"
+        },
+        "plazo_credito_positivo": {
+          "name": "plazo_credito_positivo",
+          "value": "\"creditos\".\"plazo_semanas\" > 0"
+        },
+        "saldo_no_negativo": {
+          "name": "saldo_no_negativo",
+          "value": "\"creditos\".\"saldo_centavos\" >= 0"
+        },
+        "total_cuadra": {
+          "name": "total_cuadra",
+          "value": "\"creditos\".\"total_centavos\" = \"creditos\".\"monto_centavos\" + \"creditos\".\"interes_centavos\""
+        },
+        "saldo_hasta_total": {
+          "name": "saldo_hasta_total",
+          "value": "\"creditos\".\"saldo_centavos\" <= \"creditos\".\"total_centavos\""
+        },
+        "liquidado_sin_saldo": {
+          "name": "liquidado_sin_saldo",
+          "value": "\"creditos\".\"estado\" <> 'liquidado' OR (\"creditos\".\"saldo_centavos\" = 0 AND \"creditos\".\"liquidado_en\" IS NOT NULL)"
+        }
+      }
+    },
+    "folios": {
+      "name": "folios",
+      "columns": {
+        "serie": {
+          "name": "serie",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ultimo": {
+          "name": "ultimo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "modelos_credito": {
+      "name": "modelos_credito",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tasa_interes_bp": {
+          "name": "tasa_interes_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plazo_semanas": {
+          "name": "plazo_semanas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mora_semanal_centavos": {
+          "name": "mora_semanal_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "semanas_para_renovar": {
+          "name": "semanas_para_renovar",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "modelos_credito_nombre_unique": {
+          "name": "modelos_credito_nombre_unique",
+          "columns": [
+            "nombre"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "modelos_credito_creado_por_usuarios_id_fk": {
+          "name": "modelos_credito_creado_por_usuarios_id_fk",
+          "tableFrom": "modelos_credito",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tipo_modelo_valido": {
+          "name": "tipo_modelo_valido",
+          "value": "\"modelos_credito\".\"tipo\" IN ('interes_fijo')"
+        },
+        "tasa_no_negativa": {
+          "name": "tasa_no_negativa",
+          "value": "\"modelos_credito\".\"tasa_interes_bp\" >= 0"
+        },
+        "plazo_modelo_positivo": {
+          "name": "plazo_modelo_positivo",
+          "value": "\"modelos_credito\".\"plazo_semanas\" > 0"
+        },
+        "mora_modelo_no_negativa": {
+          "name": "mora_modelo_no_negativa",
+          "value": "\"modelos_credito\".\"mora_semanal_centavos\" >= 0"
+        },
+        "semanas_renovar_no_negativas": {
+          "name": "semanas_renovar_no_negativas",
+          "value": "\"modelos_credito\".\"semanas_para_renovar\" >= 0"
+        },
+        "modelo_activo_valido": {
+          "name": "modelo_activo_valido",
+          "value": "\"modelos_credito\".\"activo\" IN (0, 1)"
+        }
+      }
+    },
+    "operaciones": {
+      "name": "operaciones",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "folio": {
+          "name": "folio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "credito_id": {
+          "name": "credito_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "semana": {
+          "name": "semana",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "monto_centavos": {
+          "name": "monto_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "saldo_resultante_centavos": {
+          "name": "saldo_resultante_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "operacion_corregida_id": {
+          "name": "operacion_corregida_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "clave_idempotencia": {
+          "name": "clave_idempotencia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registrado_por": {
+          "name": "registrado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "registrado_en": {
+          "name": "registrado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "operaciones_folio_unique": {
+          "name": "operaciones_folio_unique",
+          "columns": [
+            "folio"
+          ],
+          "isUnique": true
+        },
+        "operaciones_clave_idempotencia_unique": {
+          "name": "operaciones_clave_idempotencia_unique",
+          "columns": [
+            "clave_idempotencia"
+          ],
+          "isUnique": true
+        },
+        "idx_operaciones_credito": {
+          "name": "idx_operaciones_credito",
+          "columns": [
+            "credito_id",
+            "registrado_en"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "operaciones_credito_id_creditos_id_fk": {
+          "name": "operaciones_credito_id_creditos_id_fk",
+          "tableFrom": "operaciones",
+          "tableTo": "creditos",
+          "columnsFrom": [
+            "credito_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "operaciones_operacion_corregida_id_operaciones_id_fk": {
+          "name": "operaciones_operacion_corregida_id_operaciones_id_fk",
+          "tableFrom": "operaciones",
+          "tableTo": "operaciones",
+          "columnsFrom": [
+            "operacion_corregida_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "operaciones_registrado_por_usuarios_id_fk": {
+          "name": "operaciones_registrado_por_usuarios_id_fk",
+          "tableFrom": "operaciones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "registrado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tipo_operacion_valido": {
+          "name": "tipo_operacion_valido",
+          "value": "\"operaciones\".\"tipo\" IN ('desembolso', 'pago', 'abono', 'liquidacion', 'correccion')"
+        },
+        "correccion_con_original": {
+          "name": "correccion_con_original",
+          "value": "(\"operaciones\".\"tipo\" = 'correccion') = (\"operaciones\".\"operacion_corregida_id\" IS NOT NULL)"
+        },
+        "correccion_con_motivo": {
+          "name": "correccion_con_motivo",
+          "value": "\"operaciones\".\"tipo\" <> 'correccion' OR \"operaciones\".\"motivo\" IS NOT NULL"
+        }
+      }
+    },
+    "sesiones": {
+      "name": "sesiones",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usuario_id": {
+          "name": "usuario_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creada_en": {
+          "name": "creada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ultima_actividad_en": {
+          "name": "ultima_actividad_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cerrada_en": {
+          "name": "cerrada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "motivo_cierre": {
+          "name": "motivo_cierre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "dispositivo": {
+          "name": "dispositivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_sesiones_una_abierta": {
+          "name": "idx_sesiones_una_abierta",
+          "columns": [
+            "usuario_id"
+          ],
+          "isUnique": true,
+          "where": "\"sesiones\".\"cerrada_en\" IS NULL"
+        }
+      },
+      "foreignKeys": {
+        "sesiones_usuario_id_usuarios_id_fk": {
+          "name": "sesiones_usuario_id_usuarios_id_fk",
+          "tableFrom": "sesiones",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "usuario_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "motivo_cierre_valido": {
+          "name": "motivo_cierre_valido",
+          "value": "\"sesiones\".\"motivo_cierre\" IN ('salida', 'nuevo_inicio', 'domingo', 'inactividad', 'desactivado', 'restablecimiento', 'cambio_contrasena')"
+        }
+      }
+    },
+    "solicitudes": {
+      "name": "solicitudes",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cliente_id": {
+          "name": "cliente_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cobrador_id": {
+          "name": "cobrador_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "modelo_id": {
+          "name": "modelo_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tipo": {
+          "name": "tipo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "credito_anterior_id": {
+          "name": "credito_anterior_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "monto_solicitado_centavos": {
+          "name": "monto_solicitado_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ocupacion": {
+          "name": "ocupacion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "ingreso_semanal_centavos": {
+          "name": "ingreso_semanal_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "tasa_interes_bp": {
+          "name": "tasa_interes_bp",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plazo_semanas": {
+          "name": "plazo_semanas",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mora_semanal_centavos": {
+          "name": "mora_semanal_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "estado": {
+          "name": "estado",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pendiente'"
+        },
+        "monto_aprobado_centavos": {
+          "name": "monto_aprobado_centavos",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fecha_desembolso": {
+          "name": "fecha_desembolso",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "motivo": {
+          "name": "motivo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisada_por": {
+          "name": "revisada_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "revisada_en": {
+          "name": "revisada_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_solicitudes_cliente": {
+          "name": "idx_solicitudes_cliente",
+          "columns": [
+            "cliente_id",
+            "creado_en"
+          ],
+          "isUnique": false
+        },
+        "idx_solicitudes_cobrador": {
+          "name": "idx_solicitudes_cobrador",
+          "columns": [
+            "cobrador_id",
+            "estado"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "solicitudes_cliente_id_clientes_id_fk": {
+          "name": "solicitudes_cliente_id_clientes_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "clientes",
+          "columnsFrom": [
+            "cliente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "solicitudes_cobrador_id_usuarios_id_fk": {
+          "name": "solicitudes_cobrador_id_usuarios_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "cobrador_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "solicitudes_modelo_id_modelos_credito_id_fk": {
+          "name": "solicitudes_modelo_id_modelos_credito_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "modelos_credito",
+          "columnsFrom": [
+            "modelo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "solicitudes_credito_anterior_id_creditos_id_fk": {
+          "name": "solicitudes_credito_anterior_id_creditos_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "creditos",
+          "columnsFrom": [
+            "credito_anterior_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "solicitudes_revisada_por_usuarios_id_fk": {
+          "name": "solicitudes_revisada_por_usuarios_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "revisada_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "solicitudes_creado_por_usuarios_id_fk": {
+          "name": "solicitudes_creado_por_usuarios_id_fk",
+          "tableFrom": "solicitudes",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tipo_solicitud_valido": {
+          "name": "tipo_solicitud_valido",
+          "value": "\"solicitudes\".\"tipo\" IN ('nueva', 'renovacion')"
+        },
+        "estado_solicitud_valido": {
+          "name": "estado_solicitud_valido",
+          "value": "\"solicitudes\".\"estado\" IN ('pendiente', 'aprobada', 'rechazada', 'cancelada')"
+        },
+        "monto_solicitado_positivo": {
+          "name": "monto_solicitado_positivo",
+          "value": "\"solicitudes\".\"monto_solicitado_centavos\" > 0"
+        },
+        "plazo_solicitud_positivo": {
+          "name": "plazo_solicitud_positivo",
+          "value": "\"solicitudes\".\"plazo_semanas\" > 0"
+        },
+        "renovacion_con_credito_anterior": {
+          "name": "renovacion_con_credito_anterior",
+          "value": "(\"solicitudes\".\"tipo\" = 'renovacion') = (\"solicitudes\".\"credito_anterior_id\" IS NOT NULL)"
+        },
+        "motivo_al_rechazar": {
+          "name": "motivo_al_rechazar",
+          "value": "\"solicitudes\".\"estado\" NOT IN ('rechazada', 'cancelada') OR \"solicitudes\".\"motivo\" IS NOT NULL"
+        },
+        "aprobada_con_monto_y_fecha": {
+          "name": "aprobada_con_monto_y_fecha",
+          "value": "\"solicitudes\".\"estado\" <> 'aprobada' OR (\"solicitudes\".\"monto_aprobado_centavos\" > 0 AND \"solicitudes\".\"fecha_desembolso\" IS NOT NULL)"
+        }
+      }
+    },
+    "usuarios": {
+      "name": "usuarios",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "usuario": {
+          "name": "usuario",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "rol": {
+          "name": "rol",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "gerente_id": {
+          "name": "gerente_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "contrasena_hash": {
+          "name": "contrasena_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "contrasena_temporal": {
+          "name": "contrasena_temporal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "temporal_expira_en": {
+          "name": "temporal_expira_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "creado_por": {
+          "name": "creado_por",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "usuarios_usuario_unique": {
+          "name": "usuarios_usuario_unique",
+          "columns": [
+            "usuario"
+          ],
+          "isUnique": true
+        },
+        "idx_usuarios_gerente": {
+          "name": "idx_usuarios_gerente",
+          "columns": [
+            "gerente_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "usuarios_gerente_id_usuarios_id_fk": {
+          "name": "usuarios_gerente_id_usuarios_id_fk",
+          "tableFrom": "usuarios",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "gerente_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "usuarios_creado_por_usuarios_id_fk": {
+          "name": "usuarios_creado_por_usuarios_id_fk",
+          "tableFrom": "usuarios",
+          "tableTo": "usuarios",
+          "columnsFrom": [
+            "creado_por"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "rol_valido": {
+          "name": "rol_valido",
+          "value": "\"usuarios\".\"rol\" IN ('administrador', 'gerente', 'cobrador')"
+        },
+        "contrasena_temporal_valida": {
+          "name": "contrasena_temporal_valida",
+          "value": "\"usuarios\".\"contrasena_temporal\" IN (0, 1)"
+        },
+        "activo_valido": {
+          "name": "activo_valido",
+          "value": "\"usuarios\".\"activo\" IN (0, 1)"
+        },
+        "gerente_solo_cobrador": {
+          "name": "gerente_solo_cobrador",
+          "value": "(\"usuarios\".\"rol\" = 'cobrador' AND \"usuarios\".\"gerente_id\" IS NOT NULL) OR (\"usuarios\".\"rol\" <> 'cobrador' AND \"usuarios\".\"gerente_id\" IS NULL)"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

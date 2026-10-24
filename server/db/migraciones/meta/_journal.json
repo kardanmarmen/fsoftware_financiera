@@ -15,6 +15,13 @@
       "when": 1791615830769,
       "tag": "0001_sesiones",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792823160635,
+      "tag": "0002_clientes_y_creditos",
+      "breakpoints": true
     }
   ]
 }
