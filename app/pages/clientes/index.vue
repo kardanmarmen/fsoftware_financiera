@@ -19,6 +19,7 @@ const columnas = computed(() => {
     },
     { accessorKey: 'telefono', header: 'Teléfono' },
     { id: 'domicilio', header: 'Colonia', cell: ({ row }) => `${row.original.colonia}, ${row.original.municipio}` },
+    { accessorKey: 'creditosActivos', header: 'Créditos activos' }, // RF15
   ]
   if (user.value?.rol !== 'cobrador') cols.push({ accessorKey: 'cobradorNombre', header: 'Cobrador' })
   return cols

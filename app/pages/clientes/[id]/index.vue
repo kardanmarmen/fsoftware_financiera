@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// RF11, RF15: ficha del cliente. El historial de solicitudes y créditos (RF14) se agrega en la tarea 2.5.
+// RF11, RF15: ficha del cliente. RF14: historial de créditos y solicitudes.
 const route = useRoute()
 const { data: cliente, error } = await useFetch(`/api/clientes/${route.params.id}`)
 
@@ -13,6 +13,9 @@ const domicilio = computed(() => {
   const numero = c.numeroInterior ? `${c.numeroExterior} int. ${c.numeroInterior}` : c.numeroExterior
   return `${c.calle} ${numero}, col. ${c.colonia}, C.P. ${c.codigoPostal}, ${c.municipio}, ${c.estado}`
 })
+
+const COLOR_CREDITO = { aprobado: 'info', aceptado: 'success', liquidado: 'neutral', cancelado: 'neutral' } as const
+const COLOR_SOLICITUD = { pendiente: 'warning', aprobada: 'success', rechazada: 'error', cancelada: 'neutral' } as const
 </script>
 
 <template>
@@ -63,9 +66,44 @@ const domicilio = computed(() => {
         </dl>
       </UCard>
 
-      <p class="text-xs text-muted">
+      <p class="text-xs text-muted mb-6">
         Registrado el {{ formatearFecha(cliente.creadoEn) }} · Última modificación {{ formatearFecha(cliente.actualizadoEn) }}
       </p>
+
+      <h2 class="font-medium mb-2">Créditos</h2>
+      <p v-if="cliente.creditos.length === 0" class="text-sm text-muted mb-6">Este cliente aún no tiene créditos.</p>
+      <div v-else class="space-y-2 mb-6">
+        <NuxtLink
+          v-for="c in cliente.creditos"
+          :key="c.id"
+          :to="`/creditos/${c.id}`"
+          class="block rounded-md border border-default p-3 hover:bg-elevated"
+        >
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="font-medium">{{ c.folio }}</span>
+            <UBadge :label="NOMBRE_ESTADO_CREDITO[c.estado]" :color="COLOR_CREDITO[c.estado]" variant="subtle" />
+            <span class="ml-auto text-sm">{{ formatearDinero(c.montoCentavos) }}</span>
+          </div>
+          <p class="text-sm text-muted mt-1">
+            <template v-if="c.estado === 'aceptado'">Saldo {{ formatearDinero(c.saldoCentavos) }} de {{ formatearDinero(c.totalCentavos) }} · </template>
+            {{ c.plazoSemanas }} semanas · Desembolso {{ formatearFechaCorta(c.fechaDesembolso) }}
+          </p>
+        </NuxtLink>
+      </div>
+
+      <h2 class="font-medium mb-2">Solicitudes</h2>
+      <p v-if="cliente.solicitudes.length === 0" class="text-sm text-muted">Este cliente aún no tiene solicitudes.</p>
+      <div v-else class="space-y-2">
+        <div v-for="s in cliente.solicitudes" :key="s.id" class="rounded-md border border-default p-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-sm">{{ formatearFecha(s.creadoEn) }}</span>
+            <span class="text-sm text-muted">{{ s.tipo === 'renovacion' ? 'Renovación' : 'Nueva' }}</span>
+            <UBadge :label="NOMBRE_ESTADO_SOLICITUD[s.estado]" :color="COLOR_SOLICITUD[s.estado]" variant="subtle" />
+            <span class="ml-auto text-sm">{{ formatearDinero(s.montoAprobadoCentavos ?? s.montoSolicitadoCentavos) }}</span>
+          </div>
+          <p v-if="s.motivo" class="text-sm text-muted mt-1">Motivo: {{ s.motivo }}</p>
+        </div>
+      </div>
     </template>
   </div>
 </template>

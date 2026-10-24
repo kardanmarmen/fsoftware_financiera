@@ -15,6 +15,39 @@ export function formatearFechaCorta(fecha: string | null | undefined) {
   return `${dia}/${mes}/${anio}`
 }
 
+// Dinero guardado en centavos: 500000 → "$5,000.00"
+const PESOS = new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' })
+export function formatearDinero(centavos: number | null | undefined) {
+  return centavos == null ? '—' : PESOS.format(centavos / 100)
+}
+
+// Porcentaje guardado en centésimas de punto: 2000 → "20 %", 1250 → "12.5 %"
+export function formatearPorcentaje(bp: number) {
+  return `${(bp / 100).toLocaleString('es-MX', { maximumFractionDigits: 2 })} %`
+}
+
+export const NOMBRE_ESTADO_CREDITO: Record<string, string> = {
+  aprobado: 'Aprobado',
+  aceptado: 'Vigente',
+  liquidado: 'Liquidado',
+  cancelado: 'Cancelado',
+}
+
+export const NOMBRE_ESTADO_SOLICITUD: Record<string, string> = {
+  pendiente: 'Pendiente',
+  aprobada: 'Aprobada',
+  rechazada: 'Rechazada',
+  cancelada: 'Cancelada',
+}
+
+export const NOMBRE_TIPO_OPERACION: Record<string, string> = {
+  desembolso: 'Desembolso',
+  pago: 'Pago',
+  abono: 'Abono',
+  liquidacion: 'Liquidación',
+  correccion: 'Corrección',
+}
+
 export const NOMBRE_ACCION: Record<string, string> = {
   inicio_sesion: 'Inicio de sesión',
   inicio_sesion_fallido: 'Inicio de sesión fallido',

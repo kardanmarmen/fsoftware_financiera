@@ -1,6 +1,6 @@
-import { asc, eq } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
-import { clientes, usuarios } from '../../db/esquema'
+import { clientes, creditos, usuarios } from '../../db/esquema'
 
 const cobrador = alias(usuarios, 'cobrador')
 
@@ -26,6 +26,8 @@ export default defineEventHandler(async (event) => {
       municipio: clientes.municipio,
       cobradorId: clientes.cobradorId,
       cobradorNombre: cobrador.nombre,
+      // RF15: créditos activos del cliente (usa idx_creditos_cliente)
+      creditosActivos: sql<number>`(SELECT COUNT(*) FROM ${creditos} WHERE ${creditos.clienteId} = ${clientes.id} AND ${creditos.estado} = 'aceptado')`,
     })
     .from(clientes)
     .innerJoin(cobrador, eq(clientes.cobradorId, cobrador.id))
