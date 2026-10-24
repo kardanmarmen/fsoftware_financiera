@@ -22,7 +22,7 @@ metodología incremental.
 | Incremento | Estado |
 | --- | --- |
 | 1. Usuarios, roles y seguridad | ✅ Terminado (1.1 a 1.5) |
-| 2. Base de datos y clientes | Pendiente |
+| 2. Base de datos y clientes | ✅ Terminado (2.1 a 2.8) |
 | 3. Solicitudes y aprobación de créditos | Pendiente |
 | 4. Pagos, abonos y morosidad | Pendiente |
 | 5. Renovaciones y liquidaciones | Pendiente |
@@ -102,6 +102,20 @@ El SQL impreso contiene el hash de la contraseña: no lo guardes ni lo compartas
 
 Nunca edites una migración que ya se aplicó: crea una nueva.
 
+## Respaldos
+
+Cada domingo a las 03:30 (hora del centro de México) el Worker `financiera-respaldos` exporta la base
+de datos completa a R2 y la conserva 12 semanas. El Administrador ve el resultado en **Respaldos**.
+
+- Configuración, recuperación y cómo probarlo: [docs/incremento-2/2.7-respaldo-de-datos.md](docs/incremento-2/2.7-respaldo-de-datos.md).
+- Publicar un cambio en el Worker de respaldos (no se publica solo con la aplicación):
+  ```sh
+  cd respaldos
+  npx wrangler deploy
+  ```
+- Antes de restaurar una exportación hay que reacomodarla con
+  `node scripts/preparar-respaldo.mjs respaldo.sql respaldo-listo.sql` (el documento 2.7 explica por qué).
+
 ## Estructura
 
 ```
@@ -116,6 +130,7 @@ server/              API y acceso a datos
   db/migraciones/    Archivos .sql generados
   utils/             Permisos, bitácora, conexión a la base, validación
 shared/              Código que usan las páginas y la API (roles, validaciones Zod, formato)
-scripts/             crear-admin.mjs, restablecer-admin.mjs
-docs/                Análisis y diseño por incremento
+scripts/             crear-admin.mjs, restablecer-admin.mjs, preparar-respaldo.mjs
+respaldos/           Worker aparte con el respaldo semanal (Workflow + Cron Trigger)
+docs/                Análisis, diseño y pruebas por incremento
 ```
