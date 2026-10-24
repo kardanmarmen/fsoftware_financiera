@@ -1,20 +1,46 @@
-import { asc, eq, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, lt, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { clientes, creditos, usuarios } from '../../db/esquema'
 
 const cobrador = alias(usuarios, 'cobrador')
+const POR_PAGINA = 50
 
-// RF11, RF15. Cobrador: sus clientes. Gerente: los de sus Cobradores. Administrador: todos (consulta).
-// La búsqueda y la paginación para Gerente y Administrador se agregan en la tarea 2.6.
+/**
+ * Condición "empieza con" que usa el índice de la columna: `col >= 'abc' AND col < 'abd'`.
+ * Funciona igual en SQLite y PostgreSQL; `LIKE '%abc%'` obligaría a leer toda la tabla (RNF06).
+ */
+function empiezaCon(columna: typeof clientes.nombreBusqueda | typeof clientes.telefono, texto: string) {
+  const siguiente = texto.slice(0, -1) + String.fromCharCode(texto.charCodeAt(texto.length - 1) + 1)
+  return and(gte(columna, texto), lt(columna, siguiente))
+}
+
+// RF11, RF15, RNF06 (diseño 2.1, sección 4.2)
+// - Cobrador: todos sus clientes; busca en el navegador, así funciona aunque se pierda la señal.
+// - Gerente (los de sus Cobradores) y Administrador (todos): búsqueda en el servidor, por páginas.
+//   El texto se interpreta como CURP (18 caracteres), teléfono (solo números) o nombre (por apellidos).
 export default defineEventHandler(async (event) => {
   const actor = await requerirUsuario(event)
+  const { q, cobradorId, pagina } = leerConsulta(event, esquemaBuscarClientes)
+  const esCobrador = actor.rol === 'cobrador'
 
-  const ambito
-    = actor.rol === 'cobrador' ? eq(clientes.cobradorId, actor.id)
+  let busqueda
+  if (!esCobrador && q) {
+    const curp = q.toUpperCase()
+    if (/^[A-Z0-9]{18}$/.test(curp)) busqueda = eq(clientes.curp, curp)
+    else if (/^\d+$/.test(q)) busqueda = empiezaCon(clientes.telefono, q)
+    else busqueda = empiezaCon(clientes.nombreBusqueda, normalizarTexto(q))
+  }
+
+  const filtro = and(
+    esCobrador ? eq(clientes.cobradorId, actor.id)
       : actor.rol === 'gerente' ? eq(cobrador.gerenteId, actor.id)
-        : undefined
+        : undefined,
+    !esCobrador && cobradorId ? eq(clientes.cobradorId, cobradorId) : undefined,
+    busqueda,
+  )
 
-  return await usarBd(event)
+  const db = usarBd(event)
+  const consulta = db
     .select({
       id: clientes.id,
       curp: clientes.curp,
@@ -31,6 +57,21 @@ export default defineEventHandler(async (event) => {
     })
     .from(clientes)
     .innerJoin(cobrador, eq(clientes.cobradorId, cobrador.id))
-    .where(ambito)
+    .where(filtro)
     .orderBy(asc(clientes.nombreBusqueda))
+
+  if (esCobrador) {
+    const lista = await consulta
+    return { clientes: lista, total: lista.length, porPagina: lista.length }
+  }
+
+  const [lista, [conteo]] = await Promise.all([
+    consulta.limit(POR_PAGINA).offset((pagina - 1) * POR_PAGINA),
+    db
+      .select({ total: sql<number>`count(*)` })
+      .from(clientes)
+      .innerJoin(cobrador, eq(clientes.cobradorId, cobrador.id))
+      .where(filtro),
+  ])
+  return { clientes: lista, total: conteo?.total ?? 0, porPagina: POR_PAGINA }
 })

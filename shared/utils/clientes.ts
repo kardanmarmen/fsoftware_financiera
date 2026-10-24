@@ -77,14 +77,7 @@ export function avisosCurp(curp: string, c: { nombre: string, apellidoPaterno: s
 
 /** Nombre en minúsculas, sin acentos y empezando por los apellidos: "perez lopez maria" (2.1, 4.2). */
 export function nombreParaBusqueda(c: { nombre: string, apellidoPaterno: string, apellidoMaterno?: string | null }) {
-  return [c.apellidoPaterno, c.apellidoMaterno, c.nombre]
-    .filter(Boolean)
-    .join(' ')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // quita los acentos (á → a); la ñ queda como n
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
+  return normalizarTexto([c.apellidoPaterno, c.apellidoMaterno, c.nombre].filter(Boolean).join(' '))
 }
 
 /** "María Pérez López" */
@@ -139,6 +132,18 @@ export const esquemaNuevoCliente = esquemaCliente.extend({
 export const esquemaEditarCliente = esquemaCliente.extend({
   actualizadoEn: z.number().int(),
 })
+
+// Búsqueda de Gerente y Administrador (GET /api/clientes, diseño 2.1 sección 4.2)
+export const esquemaBuscarClientes = z.object({
+  q: z.string().trim().max(100, 'Máximo 100 caracteres').optional(),
+  cobradorId: z.string().max(50).optional(),
+  pagina: z.coerce.number().int().min(1).catch(1),
+})
+
+/** Texto en minúsculas y sin acentos, para comparar búsquedas ("Pérez" encuentra "perez"). */
+export function normalizarTexto(texto: string) {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim()
+}
 
 export type CampoCliente = keyof z.output<typeof esquemaCliente>
 
