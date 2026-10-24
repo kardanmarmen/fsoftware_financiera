@@ -25,6 +25,11 @@ const { user } = useUserSession()
           <p class="text-sm text-muted mb-3">Registro de accesos y cambios.</p>
           <UButton to="/bitacora" label="Abrir" variant="outline" />
         </UCard>
+        <UCard v-if="user?.rol === 'administrador'">
+          <h2 class="font-medium">Respaldos</h2>
+          <p class="text-sm text-muted mb-3">Copias semanales de la base de datos.</p>
+          <UButton to="/respaldos" label="Abrir" variant="outline" />
+        </UCard>
       </template>
     </div>
   </div>

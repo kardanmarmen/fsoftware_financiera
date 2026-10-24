@@ -1,0 +1,29 @@
+// Worker de respaldos (RF117–RF121). Va separado de la app para que un cambio en uno no afecte
+// al otro (RNF21). Se publica con: cd respaldos && npx wrangler deploy
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "financiera-respaldos",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  // No responde peticiones; no necesita dirección pública
+  "workers_dev": false,
+  "vars": {
+    "CUENTA_ID": "f8717a6dc306cd1411639d33153b5c90",
+    "BASE_DATOS_ID": "7335738d-0e91-407b-a9c6-b291c3d8d313"
+  },
+  "workflows": [
+    {
+      "name": "respaldo-semanal",
+      "binding": "FLUJO_RESPALDO",
+      "class_name": "FlujoRespaldo",
+      // Domingo 09:30 UTC = 03:30 en el centro de México, después del cierre semanal de sesiones (RF06)
+      "schedules": ["30 9 * * SUN"]
+    }
+  ],
+  "d1_databases": [
+    { "binding": "DB", "database_name": "financiera", "database_id": "7335738d-0e91-407b-a9c6-b291c3d8d313" }
+  ],
+  // Bucket privado exclusivo para respaldos; los de más de 12 semanas los borra una regla de R2 (RF120)
+  "r2_buckets": [{ "binding": "RESPALDOS", "bucket_name": "financiera-respaldos" }]
+}

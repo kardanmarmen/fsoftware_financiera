@@ -326,6 +326,26 @@ export const operaciones = sqliteTable(
   ],
 )
 
+export const ESTADOS_RESPALDO = ['en_proceso', 'correcto', 'fallido'] as const
+
+// RF117–RF121: registro de cada respaldo automático (lo escribe el Worker respaldos/)
+export const respaldos = sqliteTable(
+  'respaldos',
+  {
+    id: text('id').primaryKey(),
+    iniciadoEn: integer('iniciado_en').notNull(),
+    terminadoEn: integer('terminado_en'),
+    estado: text('estado', { enum: ESTADOS_RESPALDO }).notNull(),
+    archivo: text('archivo'), // ubicación del respaldo en R2
+    tamanoBytes: integer('tamano_bytes'),
+    error: text('error'),
+  },
+  (t) => [
+    index('idx_respaldos_fecha').on(t.iniciadoEn),
+    check('estado_respaldo_valido', sql`${t.estado} IN ('en_proceso', 'correcto', 'fallido')`),
+  ],
+)
+
 // RF113: último número de cada serie de folios ('CR' créditos, 'OP' operaciones)
 export const folios = sqliteTable('folios', {
   serie: text('serie').primaryKey(),

@@ -45,3 +45,6 @@ desktop.ini
 
 # Archivo temporal de los scripts (crear-admin, restablecer-admin)
 script-temporal.sql
+
+# Tipos generados por wrangler types en respaldos/
+respaldos/worker-configuration.d.ts

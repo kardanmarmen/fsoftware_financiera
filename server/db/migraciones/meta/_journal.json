@@ -22,6 +22,13 @@
       "when": 1792823160635,
       "tag": "0002_clientes_y_creditos",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1792826435904,
+      "tag": "0003_respaldos",
+      "breakpoints": true
     }
   ]
 }
