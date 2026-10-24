@@ -4,8 +4,10 @@ const { user, fetch: actualizarSesion } = useUserSession()
 // RNF16: el menú solo muestra lo que el rol puede usar. "Financiera" (a la izquierda) lleva al inicio.
 const enlaces = computed(() => {
   const rol = user.value?.rol
-  if (rol !== 'administrador' && rol !== 'gerente') return []
+  const clientes = { label: 'Clientes', to: '/clientes', icon: 'i-lucide-contact' }
+  if (rol !== 'administrador' && rol !== 'gerente') return [clientes]
   return [
+    clientes,
     { label: rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios', to: '/usuarios', icon: 'i-lucide-users' },
     { label: 'Bitácora', to: '/bitacora', icon: 'i-lucide-scroll-text' },
   ]
