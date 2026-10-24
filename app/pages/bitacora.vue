@@ -43,12 +43,20 @@ function limpiarFiltros() {
 
 type Registro = NonNullable<typeof data.value>['registros'][number]
 
-// Nombre de la acción y, en los cierres automáticos, el motivo.
+// Nombre de la acción y un dato extra: el motivo de un cierre automático o los campos que cambiaron.
 function describirAccion(registro: Registro) {
   const nombre = NOMBRE_ACCION[registro.accion] ?? registro.accion
-  if (registro.accion !== 'sesion_expirada' || !registro.detalle) return nombre
-  const { motivo } = JSON.parse(registro.detalle) as { motivo?: string }
-  return motivo ? `${nombre} (${NOMBRE_MOTIVO_CIERRE[motivo] ?? motivo})` : nombre
+  if (!registro.detalle) return nombre
+  if (registro.accion === 'sesion_expirada') {
+    const { motivo } = JSON.parse(registro.detalle) as { motivo?: string }
+    return motivo ? `${nombre} (${NOMBRE_MOTIVO_CIERRE[motivo] ?? motivo})` : nombre
+  }
+  if (registro.accion === 'cliente_modificado') {
+    const { despues } = JSON.parse(registro.detalle) as { despues?: Record<string, unknown> }
+    const campos = Object.keys(despues ?? {}).map((c) => NOMBRE_CAMPO_CLIENTE[c as CampoCliente] ?? c)
+    return campos.length ? `${nombre} (${campos.join(', ')})` : nombre
+  }
+  return nombre
 }
 
 const columnas: TableColumn<Registro>[] = [

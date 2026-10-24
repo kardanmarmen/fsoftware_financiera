@@ -38,6 +38,43 @@ export function fechaDeCurp(curp: string): string | null {
   return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(fecha) ? fecha : null
 }
 
+// Palabras que la CURP se brinca al tomar las iniciales (instructivo de RENAPO)
+const PARTICULAS = ['DA', 'DAS', 'DE', 'DEL', 'DER', 'DI', 'DIE', 'DD', 'EL', 'LA', 'LOS', 'LAS', 'LE', 'LES', 'MAC', 'MC', 'VAN', 'VON', 'Y']
+const NOMBRES_COMUNES = ['MARIA', 'MA', 'MA.', 'JOSE', 'J', 'J.']
+
+function primeraLetra(texto: string | null | undefined, brincar: string[]) {
+  const palabras = (texto ?? '')
+    .toUpperCase()
+    .replace(/Ñ/g, 'X') // la CURP usa X en lugar de Ñ
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .split(/\s+/)
+    .filter(Boolean)
+  const util = palabras.filter((p) => !brincar.includes(p))
+  // Si todo eran palabras a brincar (p. ej. el nombre es solo "María"), se usa la primera
+  return (util[0] ?? palabras[0] ?? '')[0] ?? ''
+}
+
+/**
+ * Compara la CURP con el nombre capturado y regresa avisos si no parecen de la misma persona.
+ * Solo avisa, no bloquea: la CURP tiene excepciones (palabras altisonantes, nombres extranjeros)
+ * que un cálculo no cubre. Una X en la CURP nunca se marca, porque RENAPO la usa para esos casos.
+ */
+export function avisosCurp(curp: string, c: { nombre: string, apellidoPaterno: string, apellidoMaterno?: string | null }) {
+  const avisos: string[] = []
+  const comparar = (posicion: number, esperada: string, campo: string) => {
+    const letra = curp[posicion - 1]
+    if (esperada && letra && letra !== 'X' && letra !== esperada) {
+      avisos.push(`La letra ${posicion} de la CURP es "${letra}", pero ${campo} empieza con "${esperada}"`)
+    }
+  }
+  comparar(1, primeraLetra(c.apellidoPaterno, PARTICULAS), 'el apellido paterno')
+  // Sin apellido materno, la CURP lleva X en la posición 3
+  if (c.apellidoMaterno?.trim()) comparar(3, primeraLetra(c.apellidoMaterno, PARTICULAS), 'el apellido materno')
+  comparar(4, primeraLetra(c.nombre, [...PARTICULAS, ...NOMBRES_COMUNES]), 'el nombre')
+  return avisos
+}
+
 /** Nombre en minúsculas, sin acentos y empezando por los apellidos: "perez lopez maria" (2.1, 4.2). */
 export function nombreParaBusqueda(c: { nombre: string, apellidoPaterno: string, apellidoMaterno?: string | null }) {
   return [c.apellidoPaterno, c.apellidoMaterno, c.nombre]
@@ -96,3 +133,31 @@ export const esquemaCliente = z.object({
 export const esquemaNuevoCliente = esquemaCliente.extend({
   cobradorId: z.uuid({ error: 'Elige el Cobrador' }).optional(),
 })
+
+// Al editar se envía la fecha de la última modificación que vio el usuario: si alguien más guardó
+// cambios mientras tanto, la edición se rechaza en lugar de borrarlos (RNF05).
+export const esquemaEditarCliente = esquemaCliente.extend({
+  actualizadoEn: z.number().int(),
+})
+
+export type CampoCliente = keyof z.output<typeof esquemaCliente>
+
+// Nombres de los campos para mostrar qué cambió (bitácora, RN-26)
+export const NOMBRE_CAMPO_CLIENTE: Record<CampoCliente, string> = {
+  curp: 'CURP',
+  nombre: 'nombre',
+  apellidoPaterno: 'apellido paterno',
+  apellidoMaterno: 'apellido materno',
+  telefono: 'teléfono',
+  telefonoAlterno: 'otro teléfono',
+  correo: 'correo',
+  calle: 'calle',
+  numeroExterior: 'número exterior',
+  numeroInterior: 'número interior',
+  colonia: 'colonia',
+  municipio: 'municipio',
+  estado: 'estado',
+  codigoPostal: 'código postal',
+  referenciasDomicilio: 'referencias del domicilio',
+  notas: 'notas',
+}

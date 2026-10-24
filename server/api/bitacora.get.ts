@@ -1,10 +1,14 @@
 import { and, desc, eq, gte, lt, or, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
-import { bitacora, usuarios } from '../db/esquema'
+import { bitacora, clientes, usuarios } from '../db/esquema'
 
 const POR_PAGINA = 50
 const DIA_MS = 24 * 60 * 60 * 1000
 const objetivo = alias(usuarios, 'objetivo') // usuario afectado por la acción
+
+// Nombre de quien recibió la acción: un usuario o un cliente. Con || (SQL estándar, igual en PostgreSQL).
+const nombreObjetivo = sql<string | null>`COALESCE(${objetivo.nombre},
+  ${clientes.nombre} || ' ' || ${clientes.apellidoPaterno} || COALESCE(' ' || ${clientes.apellidoMaterno}, ''))`
 
 // Inicio de un día (AAAA-MM-DD) en hora del centro de México, en milisegundos.
 // México no tiene horario de verano desde 2022: siempre es UTC-6.
@@ -34,14 +38,15 @@ export default defineEventHandler(async (event) => {
         accion: bitacora.accion,
         usuarioNombre: usuarios.nombre,
         usuarioIntentado: bitacora.usuarioIntentado,
-        objetivoNombre: objetivo.nombre,
+        objetivoNombre: nombreObjetivo,
         detalle: bitacora.detalle,
         ip: bitacora.ip,
         creadoEn: bitacora.creadoEn,
       })
       .from(bitacora)
       .leftJoin(usuarios, eq(bitacora.usuarioId, usuarios.id))
-      .leftJoin(objetivo, eq(bitacora.entidadId, objetivo.id))
+      .leftJoin(objetivo, and(eq(bitacora.entidad, 'usuario'), eq(bitacora.entidadId, objetivo.id)))
+      .leftJoin(clientes, and(eq(bitacora.entidad, 'cliente'), eq(bitacora.entidadId, clientes.id)))
       .where(filtro)
       .orderBy(desc(bitacora.creadoEn))
       .limit(POR_PAGINA)

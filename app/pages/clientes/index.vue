@@ -7,9 +7,16 @@ const { data: lista, status } = await useFetch('/api/clientes')
 
 type Fila = NonNullable<typeof lista.value>[number]
 
+const NuxtLink = resolveComponent('NuxtLink')
+
 const columnas = computed(() => {
   const cols: TableColumn<Fila>[] = [
-    { id: 'nombre', header: 'Nombre', cell: ({ row }) => nombreCompleto(row.original) },
+    {
+      id: 'nombre',
+      header: 'Nombre',
+      cell: ({ row }) =>
+        h(NuxtLink, { to: `/clientes/${row.original.id}`, class: 'text-primary font-medium' }, () => nombreCompleto(row.original)),
+    },
     { accessorKey: 'telefono', header: 'Teléfono' },
     { id: 'domicilio', header: 'Colonia', cell: ({ row }) => `${row.original.colonia}, ${row.original.municipio}` },
   ]
