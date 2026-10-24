@@ -78,7 +78,7 @@ function limpiar() {
       <UInput
         v-model="texto"
         icon="i-lucide-search"
-        :placeholder="esCobrador ? 'Buscar por nombre, CURP, teléfono o colonia' : 'Apellidos, CURP o teléfono'"
+        :placeholder="esCobrador ? 'Buscar por nombre, CURP, teléfono o colonia' : 'Nombre, apellidos, CURP o teléfono'"
         class="w-full"
       />
       <USelectMenu

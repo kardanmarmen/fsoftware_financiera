@@ -37,6 +37,7 @@ export default defineEventHandler(async (event) => {
         creadoEn: ahora,
         actualizadoEn: ahora,
       }),
+      insertarPalabras(event, id, cliente), // índice de búsqueda (RNF06)
       eventoBitacora(event, {
         usuarioId: actor.id,
         gerenteId: actor.gerenteId,

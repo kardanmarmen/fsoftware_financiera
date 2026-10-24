@@ -147,6 +147,21 @@ export const clientes = sqliteTable(
   ],
 )
 
+// RNF06: índice de palabras del nombre, para buscar por cualquier palabra (nombre de pila o
+// apellidos) usando un índice. Una fila por palabra: "perez", "lopez", "ana".
+// Se mantiene al registrar o editar el cliente (server/utils/clientes.ts).
+export const clientePalabras = sqliteTable(
+  'cliente_palabras',
+  {
+    clienteId: text('cliente_id').notNull().references(() => clientes.id),
+    palabra: text('palabra').notNull(), // en minúsculas y sin acentos
+  },
+  (t) => [
+    primaryKey({ columns: [t.clienteId, t.palabra] }),
+    index('idx_cliente_palabras_palabra').on(t.palabra, t.clienteId),
+  ],
+)
+
 export const TIPOS_MODELO = ['interes_fijo'] as const // RF40: se agregarán más
 
 export const modelosCredito = sqliteTable(

@@ -52,6 +52,10 @@ export default defineEventHandler(async (event) => {
         clientes,
         and(eq(clientes.id, anterior.id), eq(clientes.actualizadoEn, ahora))!,
       ),
+      // Índice de búsqueda (RNF06): solo si cambió el nombre, y solo si la edición se guardó
+      ...(['nombre', 'apellidoPaterno', 'apellidoMaterno'].some((c) => c in despues)
+        ? reemplazarPalabras(event, anterior.id, datos, ahora)
+        : []),
     ])
     if (resultado.meta.changes === 0) {
       throw createError({

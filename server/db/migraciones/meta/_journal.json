@@ -29,6 +29,13 @@
       "when": 1792826435904,
       "tag": "0003_respaldos",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792828838024,
+      "tag": "0004_palabras_de_clientes",
+      "breakpoints": true
     }
   ]
 }
