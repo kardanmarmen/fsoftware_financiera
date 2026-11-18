@@ -27,9 +27,13 @@ const { data, status, error } = await useFetch('/api/bitacora', { query: consult
 const opcionesAccion = Object.entries(NOMBRE_ACCION).map(([value, label]) => ({ value, label }))
 
 // Usuarios que se pueden elegir: el Administrador ve a todos; el Gerente, a sí mismo y a sus Cobradores.
-const { data: lista } = await useFetch('/api/usuarios')
+// Incluye a los eliminados (RN-08): su actividad sigue en la bitácora.
+const { data: lista } = await useFetch('/api/usuarios', { query: { incluirEliminados: '1' } })
 const opcionesUsuario = computed(() => {
-  const opciones = (lista.value ?? []).map((u) => ({ value: u.id, label: u.nombre }))
+  const opciones = (lista.value ?? []).map((u) => ({
+    value: u.id,
+    label: u.eliminadoEn ? `${u.nombre} (eliminado)` : u.nombre,
+  }))
   if (user.value && !opciones.some((o) => o.value === user.value!.id)) {
     opciones.unshift({ value: user.value.id, label: user.value.nombre })
   }
@@ -59,15 +63,24 @@ function describirAccion(registro: Registro) {
   return nombre
 }
 
+// El nombre de un usuario eliminado se sigue mostrando, con una marca (RN-08).
+const conMarca = (nombre: string, eliminado: boolean) => (eliminado ? `${nombre} (eliminado)` : nombre)
+
 const columnas: TableColumn<Registro>[] = [
   { accessorKey: 'creadoEn', header: 'Fecha', cell: ({ row }) => formatearFecha(row.original.creadoEn) },
   {
     accessorKey: 'usuarioNombre',
     header: 'Usuario',
-    cell: ({ row }) => row.original.usuarioNombre ?? `(intento: ${row.original.usuarioIntentado})`,
+    cell: ({ row }) => row.original.usuarioNombre
+      ? conMarca(row.original.usuarioNombre, row.original.usuarioEliminado)
+      : `(intento: ${row.original.usuarioIntentado})`,
   },
   { accessorKey: 'accion', header: 'Acción', cell: ({ row }) => describirAccion(row.original) },
-  { accessorKey: 'objetivoNombre', header: 'Sobre', cell: ({ row }) => row.original.objetivoNombre ?? '—' },
+  {
+    accessorKey: 'objetivoNombre',
+    header: 'Sobre',
+    cell: ({ row }) => row.original.objetivoNombre ? conMarca(row.original.objetivoNombre, row.original.objetivoEliminado) : '—',
+  },
   { accessorKey: 'ip', header: 'IP', cell: ({ row }) => row.original.ip ?? '—' },
 ]
 </script>

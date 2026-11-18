@@ -57,6 +57,7 @@ export const NOMBRE_ACCION: Record<string, string> = {
   usuario_modificado: 'Modificación de usuario',
   usuario_activado: 'Activación de usuario',
   usuario_desactivado: 'Desactivación de usuario',
+  usuario_eliminado: 'Eliminación de usuario',
   cobrador_reasignado: 'Reasignación de Cobrador',
   contrasena_restablecida: 'Restablecimiento de contraseña',
   contrasena_cambiada: 'Cambio de contraseña',

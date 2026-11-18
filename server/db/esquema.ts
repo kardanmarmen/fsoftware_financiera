@@ -34,6 +34,12 @@ export const usuarios = sqliteTable(
     creadoPor: text('creado_por'),
     creadoEn: integer('creado_en').notNull(),
     actualizadoEn: integer('actualizado_en').notNull(),
+    // RN-08: eliminación lógica. La fila se conserva para que la bitácora y las operaciones
+    // sigan mostrando quién hizo cada cosa; el usuario desaparece de las listas y no puede entrar.
+    // Sin llave foránea ni CHECK a propósito: agregarlos obligaría a reconstruir toda la tabla en
+    // SQLite. La API garantiza que un usuario eliminado queda inactivo (activo = 0).
+    eliminadoEn: integer('eliminado_en'),
+    eliminadoPor: text('eliminado_por'), // id del Administrador que lo eliminó
   },
   (t) => [
     foreignKey({ columns: [t.gerenteId], foreignColumns: [t.id] }),

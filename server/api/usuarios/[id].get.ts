@@ -13,5 +13,6 @@ export default defineEventHandler(async (event) => {
     puedeAdministrar: puedeAdministrar(actor, objetivo),
     puedeReasignar: actor.rol === 'administrador' && objetivo.rol === 'cobrador',
     puedeRestablecer: actor.rol === 'administrador' && objetivo.rol !== 'administrador',
+    puedeEliminar: puedeEliminar(actor, objetivo),
   }
 })

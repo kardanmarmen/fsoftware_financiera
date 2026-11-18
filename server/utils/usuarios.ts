@@ -1,11 +1,17 @@
-import { eq } from 'drizzle-orm'
+import { eq, isNull } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import type { H3Event } from 'h3'
 import { usuarios, type Usuario } from '../db/esquema'
 
 const gerente = alias(usuarios, 'gerente')
 
-/** Consulta de usuarios con el nombre de su Gerente. Nunca incluye el hash de la contraseña. */
+/** Condición para excluir a los usuarios eliminados (RN-08) en cualquier consulta. */
+export const noEliminado = isNull(usuarios.eliminadoEn)
+
+/**
+ * Consulta de usuarios con el nombre de su Gerente. Nunca incluye el hash de la contraseña.
+ * Incluye a los eliminados: quien la use debe agregar `noEliminado` a su `where`.
+ */
 export function consultaUsuarios(event: H3Event) {
   return usarBd(event)
     .select({
@@ -19,6 +25,7 @@ export function consultaUsuarios(event: H3Event) {
       gerenteNombre: gerente.nombre,
       creadoEn: usuarios.creadoEn,
       actualizadoEn: usuarios.actualizadoEn,
+      eliminadoEn: usuarios.eliminadoEn,
     })
     .from(usuarios)
     .leftJoin(gerente, eq(usuarios.gerenteId, gerente.id))
@@ -29,7 +36,8 @@ export async function obtenerUsuarioObjetivo(event: H3Event, actor: Usuario) {
   const id = getRouterParam(event, 'id') ?? ''
   const objetivo = await usarBd(event).query.usuarios.findFirst({ where: eq(usuarios.id, id) })
   // 404 también cuando no tiene permiso: no revela que el usuario existe.
-  if (!objetivo || !puedeVer(actor, objetivo)) {
+  // Un usuario eliminado ya no se puede consultar ni modificar (RN-08).
+  if (!objetivo || objetivo.eliminadoEn || !puedeVer(actor, objetivo)) {
     throw createError({ statusCode: 404, message: 'Usuario no encontrado' })
   }
   return objetivo

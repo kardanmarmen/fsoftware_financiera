@@ -38,6 +38,15 @@ export function puedeAdministrar(actor: Usuario, objetivo: Usuario) {
   return false
 }
 
+/**
+ * ¿`actor` puede eliminar a `objetivo`? (RN-08)
+ * Solo el Administrador, y a cualquier otro usuario, incluidos otros Administradores.
+ * Nadie se elimina a sí mismo (como RN-07), así que siempre queda al menos un Administrador.
+ */
+export function puedeEliminar(actor: Usuario, objetivo: Usuario) {
+  return actor.rol === 'administrador' && actor.id !== objetivo.id
+}
+
 /** ¿`actor` puede ver a `objetivo`? (RF28, RF32) */
 export function puedeVer(actor: Usuario, objetivo: Usuario) {
   return actor.rol === 'administrador' || actor.id === objetivo.id || puedeAdministrar(actor, objetivo)
