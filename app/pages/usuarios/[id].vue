@@ -52,6 +52,25 @@ async function cambiarEstado() {
   }
 }
 
+// --- Eliminar (solo Administrador, RN-08) ---
+const confirmarEliminar = ref(false)
+const eliminando = ref(false)
+
+async function eliminar() {
+  eliminando.value = true
+  try {
+    await $fetch(`/api/usuarios/${id}`, { method: 'DELETE' })
+    toast.add({ title: 'Usuario eliminado', color: 'success' })
+    confirmarEliminar.value = false
+    await navigateTo('/usuarios')
+  } catch (e) {
+    toast.add({ title: 'No se pudo eliminar', description: mensajeDeError(e), color: 'error' })
+    confirmarEliminar.value = false
+  } finally {
+    eliminando.value = false
+  }
+}
+
 // --- Reasignar Cobrador (solo Administrador) ---
 const { data: lista } = await useFetch('/api/usuarios', { immediate: usuario.value?.puedeReasignar ?? false })
 const gerentes = computed(() =>
@@ -180,9 +199,24 @@ async function restablecer() {
           label="Desactivar usuario"
           color="error"
           variant="outline"
+          class="mb-8"
           @click="confirmarEstado = true"
         />
-        <UButton v-else label="Activar usuario" variant="outline" @click="confirmarEstado = true" />
+        <UButton v-else label="Activar usuario" variant="outline" class="mb-8" @click="confirmarEstado = true" />
+      </template>
+
+      <template v-if="usuario.puedeEliminar">
+        <h2 class="font-medium mb-1">Eliminar usuario</h2>
+        <p class="text-sm text-muted mb-2">
+          Para cuentas registradas por error o que ya no se usarán. Deja de aparecer en las listas y su
+          nombre de usuario queda libre, pero la bitácora conserva todo lo que hizo.
+        </p>
+        <UButton
+          label="Eliminar usuario"
+          icon="i-lucide-trash-2"
+          color="error"
+          @click="confirmarEliminar = true"
+        />
       </template>
 
       <Confirmacion
@@ -195,6 +229,16 @@ async function restablecer() {
         :color="usuario.activo ? 'error' : 'primary'"
         :cargando="cambiandoEstado"
         @confirmar="cambiarEstado"
+      />
+
+      <Confirmacion
+        v-model:open="confirmarEliminar"
+        titulo="¿Eliminar usuario?"
+        :descripcion="`${usuario.nombre} (${usuario.usuario}) ya no podrá entrar y dejará de aparecer en las listas. Esta acción no se puede deshacer desde el sistema. Su historial en la bitácora se conserva.`"
+        etiqueta="Eliminar"
+        color="error"
+        :cargando="eliminando"
+        @confirmar="eliminar"
       />
 
       <Confirmacion
