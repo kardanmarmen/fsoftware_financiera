@@ -5,9 +5,12 @@ const { user, fetch: actualizarSesion } = useUserSession()
 const enlaces = computed(() => {
   const rol = user.value?.rol
   const clientes = { label: 'Clientes', to: '/clientes', icon: 'i-lucide-contact' }
-  if (rol !== 'administrador' && rol !== 'gerente') return [clientes]
+  const solicitudes = { label: 'Solicitudes', to: '/solicitudes', icon: 'i-lucide-file-text' }
+  if (rol !== 'administrador' && rol !== 'gerente') return [clientes, solicitudes]
   return [
     clientes,
+    solicitudes,
+    { label: 'Modelos', to: '/modelos', icon: 'i-lucide-percent' },
     { label: rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios', to: '/usuarios', icon: 'i-lucide-users' },
     { label: 'Bitácora', to: '/bitacora', icon: 'i-lucide-scroll-text' },
   ]
@@ -29,7 +32,7 @@ async function cerrarSesion() {
 
 <template>
   <div class="min-h-dvh">
-    <header class="border-b border-default">
+    <header class="border-b border-default print:hidden">
       <UContainer class="flex flex-wrap items-center gap-2 py-3">
         <NuxtLink to="/" class="font-semibold mr-4">Financiera</NuxtLink>
 

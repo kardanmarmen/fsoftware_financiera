@@ -45,6 +45,10 @@ export default defineEventHandler(async (event) => {
     cobradorNombre,
     puedeEditar: puedeEditarCliente(actor),
     puedeCorregirCurp: actor.rol === 'gerente', // matriz 4.1
+    // RF41: nueva solicitud si no tiene una pendiente ni un crédito vigente o por desembolsar
+    puedeSolicitar: puedeEditarCliente(actor)
+      && !listaSolicitudes.some((s) => s.estado === 'pendiente')
+      && !listaCreditos.some((c) => c.estado === 'aprobado' || c.estado === 'aceptado'),
     // Los vigentes primero (RF15: créditos activos del cliente)
     creditos: listaCreditos.sort((a, b) => Number(b.estado === 'aceptado') - Number(a.estado === 'aceptado')),
     solicitudes: listaSolicitudes,

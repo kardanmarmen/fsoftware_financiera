@@ -23,12 +23,13 @@ metodología incremental.
 | --- | --- |
 | 1. Usuarios, roles y seguridad | ✅ Terminado (1.1 a 1.5) |
 | 2. Base de datos y clientes | ✅ Terminado (2.1 a 2.8) |
-| 3. Solicitudes y aprobación de créditos | Pendiente |
-| 4. Pagos, abonos y morosidad | Pendiente |
-| 5. Renovaciones y liquidaciones | Pendiente |
+| 3. Solicitudes y aprobación de créditos | 🟡 Modelos, solicitudes, aprobación y rechazo |
+| 4. Pagos, abonos y morosidad | 🟡 Pagos y abonos (faltan moras, alertas y reportes) |
+| 5. Renovaciones y liquidaciones | 🟡 Desembolso, liquidación y comprobantes (faltan renovaciones) |
 | 6. Integración, pruebas e implementación | Pendiente |
 
-Documentación de cada incremento en [`docs/`](docs/).
+Documentación de cada incremento en [`docs/`](docs/). El flujo de créditos (solicitud, desembolso,
+pagos, liquidación y comprobantes) está en [docs/incremento-3-5/flujo-de-creditos.md](docs/incremento-3-5/flujo-de-creditos.md).
 
 ## Desarrollo local
 
