@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { calendarioPagos, creditos, solicitudes } from '../../../db/esquema'
+import { calendarioPagos, creditos, documentos, solicitudes } from '../../../db/esquema'
 
 // RF47–RF52, RF56: el Gerente aprueba (puede ajustar monto, tasa y plazo) y se genera el crédito en
 // estado "Aprobado" con su calendario de pagos. El dinero se entrega después, con el desembolso (RF94).
@@ -68,6 +68,8 @@ export default defineEventHandler(async (event) => {
         actualizadoEn: ahora,
       })
       .where(and(eq(solicitudes.id, solicitud.id), seCreo)),
+    // RF20: los documentos de la solicitud quedan ligados al crédito
+    db.update(documentos).set({ creditoId }).where(and(eq(documentos.solicitudId, solicitud.id), seCreo)),
     ...calculo.calendario.map((s) =>
       insertarSi(db, calendarioPagos, { id: crypto.randomUUID(), creditoId, ...s, cubiertoCentavos: 0 }, creditos, eq(creditos.id, creditoId))),
     eventoBitacoraSi(

@@ -15,6 +15,11 @@ export default defineEventHandler(async (event) => {
     revisarNuevaSolicitud(db, cliente.id),
   ])
   if (!modelo) throw createError({ statusCode: 400, message: 'El modelo de crédito no existe o está desactivado' })
+  // RF27: solo los modelos asignados al Cobrador del cliente (si tiene alguno asignado)
+  const permitidos = await modelosPermitidos(db, cliente.cobradorId)
+  if (permitidos && !permitidos.includes(modelo.id)) {
+    throw createError({ statusCode: 400, message: 'Ese modelo de crédito no está asignado al Cobrador del cliente' })
+  }
   if (!revision.permitido) throw createError({ statusCode: 409, message: revision.motivo })
   const anterior = revision.creditoAnterior
 

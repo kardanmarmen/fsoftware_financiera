@@ -118,7 +118,7 @@ function estadoRenovacion(r: Renovacion) {
         </UCard>
         <UCard>
           <p class="text-sm text-muted">Operaciones</p>
-          <p class="text-xl font-semibold">{{ pagos.data.value.pagos.length }}</p>
+          <p class="text-xl font-semibold">{{ pagos.data.value.operaciones }}</p>
         </UCard>
       </div>
       <template v-if="pagos.data.value.porCobrador.length > 1">
@@ -131,6 +131,13 @@ function estadoRenovacion(r: Renovacion) {
           </div>
         </div>
       </template>
+      <UAlert
+        v-if="pagos.data.value.truncado"
+        color="warning"
+        variant="subtle"
+        :description="`La lista y el CSV muestran las ${pagos.data.value.pagos.length.toLocaleString('es-MX')} operaciones más recientes; los totales incluyen todo el periodo. Para ver todas, elige un periodo más corto.`"
+        class="mb-3"
+      />
       <p v-if="pagos.data.value.pagos.length === 0" class="text-sm text-muted">No hay pagos en este periodo.</p>
       <div v-else class="space-y-1">
         <NuxtLink

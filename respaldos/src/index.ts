@@ -4,7 +4,8 @@
 //   1. Registra el respaldo en la tabla `respaldos` como "en_proceso".
 //   2. Pide a la API de D1 que exporte la base de datos completa (archivo .sql).
 //   3. Espera a que la exportación esté lista y la guarda en R2, separada de la base (RF121).
-//   4. Marca el respaldo como "correcto" o, si algo falló, como "fallido" con el error.
+//   4. Copia los documentos de los clientes subidos desde el último respaldo correcto (RF118).
+//   5. Marca el respaldo como "correcto" o, si algo falló, como "fallido" con el error.
 //
 // La exportación la hace Cloudflare: este Worker casi solo espera, así que no gasta CPU.
 // Basado en el ejemplo oficial: https://developers.cloudflare.com/workflows/examples/backup-d1/
@@ -13,6 +14,7 @@ import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloud
 interface Env {
   DB: D1Database
   RESPALDOS: R2Bucket
+  DOCUMENTOS: R2Bucket
   FLUJO_RESPALDO: Workflow
   CUENTA_ID: string
   BASE_DATOS_ID: string
@@ -86,6 +88,34 @@ export class FlujoRespaldo extends WorkflowEntrypoint<Env> {
           return { clave, tamano: objeto.size }
         },
       )
+
+      // RF118: los documentos nunca se reemplazan ni se borran (RF19), así que basta copiar los nuevos.
+      // Se toman los subidos desde que empezó el último respaldo correcto (con un día de margen) y se
+      // guardan en documentos/<misma clave>, fuera de la regla de conservación de 84 días (prefijo d1/).
+      const copiados = await paso.do(
+        'copiar documentos',
+        { retries: { limit: 3, delay: '30 seconds', backoff: 'exponential' }, timeout: '10 minutes' },
+        async () => {
+          const ultimo = await this.env.DB.prepare(
+            "SELECT MAX(iniciado_en) AS desde FROM respaldos WHERE estado = 'correcto'",
+          ).first<{ desde: number | null }>()
+          const desde = (ultimo?.desde ?? 0) - 24 * 60 * 60 * 1000
+          const { results } = await this.env.DB.prepare(
+            'SELECT clave_archivo FROM documentos WHERE subido_en >= ? ORDER BY subido_en',
+          ).bind(desde).all<{ clave_archivo: string }>()
+          let total = 0
+          for (const { clave_archivo: clave } of results) {
+            if (await this.env.RESPALDOS.head(`documentos/${clave}`)) continue // ya copiado (reintento)
+            const objeto = await this.env.DOCUMENTOS.get(clave)
+            if (!objeto) continue
+            // Hasta 10 MB por documento: se copia completo en memoria
+            await this.env.RESPALDOS.put(`documentos/${clave}`, await objeto.arrayBuffer(), { httpMetadata: objeto.httpMetadata })
+            total++
+          }
+          return total
+        },
+      )
+      console.log(`Documentos copiados: ${copiados}`)
 
       await paso.do('registrar resultado', async () => {
         await this.env.DB.prepare(

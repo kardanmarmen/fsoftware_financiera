@@ -48,3 +48,6 @@ script-temporal.sql
 
 # Tipos generados por wrangler types en respaldos/
 respaldos/worker-configuration.d.ts
+
+# Capturas de las pruebas de pantalla
+pruebas/*.png

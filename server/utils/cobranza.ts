@@ -1,5 +1,5 @@
 import { and, eq, sql } from 'drizzle-orm'
-import { calendarioPagos, clientes, creditos, moras, type Usuario, usuarios } from '../db/esquema'
+import { clientes, creditos, moras, type Usuario, usuarios } from '../db/esquema'
 
 const DIA_MS = 24 * 60 * 60 * 1000
 
@@ -21,14 +21,12 @@ export type EstadoCobranza = (typeof ESTADOS_COBRANZA)[number]
 /**
  * RF73–RF78, RNF26: situación de cobro de los créditos vigentes del actor: próximo vencimiento, lo que
  * ya venció sin pagarse, días de atraso, mora pendiente (incluida la que aún no se genera) y nivel de
- * morosidad. Se calcula con dos consultas agrupadas, sin leer el calendario completo de cada crédito.
+ * morosidad. Lee solo los créditos vigentes y sus moras, no el calendario (ver situacionDelCredito):
+ * con 3,000 créditos son ~3,000 filas leídas en lugar de ~50,000, importante para el límite diario de D1.
  */
 export async function situacionCobranza(db: BaseDatos, actor: Usuario, hoy = hoyEnMexico()) {
   const ambito = and(eq(creditos.estado, 'aceptado'), ambitoCreditos(actor))
-  const vence = calendarioPagos.fechaVencimiento
-  const falta = sql`${calendarioPagos.montoCentavos} - ${calendarioPagos.cubiertoCentavos}`
-
-  const [lista, semanas, morasGeneradas] = await Promise.all([
+  const [lista, listaMoras] = await Promise.all([
     db
       .select({
         id: creditos.id,
@@ -40,66 +38,54 @@ export async function situacionCobranza(db: BaseDatos, actor: Usuario, hoy = hoy
         telefono: clientes.telefono,
         cobradorNombre: usuarios.nombre,
         saldoCentavos: creditos.saldoCentavos,
+        totalCentavos: creditos.totalCentavos,
         pagoSemanalCentavos: creditos.pagoSemanalCentavos,
+        plazoSemanas: creditos.plazoSemanas,
+        fechaDesembolso: creditos.fechaDesembolso,
         moraSemanalCentavos: creditos.moraSemanalCentavos,
       })
       .from(creditos)
       .innerJoin(clientes, eq(creditos.clienteId, clientes.id))
       .innerJoin(usuarios, eq(creditos.cobradorId, usuarios.id))
       .where(ambito),
-    // Semanas sin cubrir, agrupadas por crédito
-    db
-      .select({
-        creditoId: calendarioPagos.creditoId,
-        proximoVencimiento: sql<string>`MIN(${vence})`,
-        semanasVencidas: sql<number>`SUM(CASE WHEN ${vence} < ${hoy} THEN 1 ELSE 0 END)`,
-        vencidoCentavos: sql<number>`SUM(CASE WHEN ${vence} < ${hoy} THEN ${falta} ELSE 0 END)`,
-        venceHoyCentavos: sql<number>`SUM(CASE WHEN ${vence} = ${hoy} THEN ${falta} ELSE 0 END)`,
-        // Semanas vencidas cuya mora aún no se genera (se genera al abrir el crédito o al cobrar)
-        sinMora: sql<number>`SUM(CASE WHEN ${vence} < ${hoy} AND NOT EXISTS (
-          SELECT 1 FROM ${moras} WHERE ${moras.creditoId} = ${calendarioPagos.creditoId} AND ${moras.semana} = ${calendarioPagos.semana}
-        ) THEN 1 ELSE 0 END)`,
-      })
-      .from(calendarioPagos)
-      .innerJoin(creditos, eq(calendarioPagos.creditoId, creditos.id))
-      .innerJoin(usuarios, eq(creditos.cobradorId, usuarios.id))
-      .where(and(ambito, sql`${calendarioPagos.cubiertoCentavos} < ${calendarioPagos.montoCentavos}`))
-      .groupBy(calendarioPagos.creditoId),
     db
       .select({
         creditoId: moras.creditoId,
-        pendienteCentavos: sql<number>`SUM(${moras.montoCentavos} - ${moras.pagadoCentavos} - ${moras.condonadoCentavos})`,
+        semana: moras.semana,
+        pendienteCentavos: sql<number>`${moras.montoCentavos} - ${moras.pagadoCentavos} - ${moras.condonadoCentavos}`,
       })
       .from(moras)
       .innerJoin(creditos, eq(moras.creditoId, creditos.id))
       .innerJoin(usuarios, eq(creditos.cobradorId, usuarios.id))
-      .where(ambito)
-      .groupBy(moras.creditoId),
+      .where(ambito),
   ])
 
-  const porCredito = new Map(semanas.map((s) => [s.creditoId, s]))
-  const moraPorCredito = new Map(morasGeneradas.map((m) => [m.creditoId, Number(m.pendienteCentavos)]))
+  const morasPorCredito = new Map<string, { semana: number, pendienteCentavos: number }[]>()
+  for (const m of listaMoras) morasPorCredito.set(m.creditoId, [...(morasPorCredito.get(m.creditoId) ?? []), m])
   const enSieteDias = sumarDias(hoy, 6)
 
   return lista
-    .map(({ clienteNombre, clienteApellidoPaterno, clienteApellidoMaterno, ...c }) => {
-      const s = porCredito.get(c.id)
-      const moraPendienteCentavos = (moraPorCredito.get(c.id) ?? 0) + Number(s?.sinMora ?? 0) * c.moraSemanalCentavos
-      const diasAtraso = diasDeAtraso(s?.proximoVencimiento, hoy)
+    .map(({ clienteNombre, clienteApellidoPaterno, clienteApellidoMaterno, totalCentavos, plazoSemanas, fechaDesembolso, ...c }) => {
+      const s = situacionDelCredito({ ...c, totalCentavos, plazoSemanas, fechaDesembolso }, hoy)
+      const generadas = morasPorCredito.get(c.id) ?? []
+      // Semanas vencidas sin cubrir cuya mora aún no se genera (se genera al abrir el crédito o al cobrar)
+      const sinMora = s.semanasVencidas - generadas.filter((m) => m.semana > s.semanasCompletas && m.semana <= s.semanasCompletas + s.semanasVencidas).length
+      const moraPendienteCentavos = generadas.reduce((t, m) => t + Number(m.pendienteCentavos), 0) + sinMora * c.moraSemanalCentavos
+      const diasAtraso = diasDeAtraso(s.proximoVencimiento, hoy)
       const estado: EstadoCobranza = diasAtraso > 0
         ? 'atrasado'
-        : s?.proximoVencimiento === hoy
+        : s.proximoVencimiento === hoy
           ? 'vence_hoy'
-          : s && s.proximoVencimiento <= enSieteDias ? 'esta_semana' : 'al_corriente'
+          : s.proximoVencimiento && s.proximoVencimiento <= enSieteDias ? 'esta_semana' : 'al_corriente'
       return {
         ...c,
         clienteNombre: nombreCompleto({ nombre: clienteNombre, apellidoPaterno: clienteApellidoPaterno, apellidoMaterno: clienteApellidoMaterno }),
-        proximoVencimiento: s?.proximoVencimiento ?? null,
-        semanasVencidas: Number(s?.semanasVencidas ?? 0),
-        vencidoCentavos: Number(s?.vencidoCentavos ?? 0),
+        proximoVencimiento: s.proximoVencimiento,
+        semanasVencidas: s.semanasVencidas,
+        vencidoCentavos: s.vencidoCentavos,
         moraPendienteCentavos,
         // Lo que debería cobrarse hoy para quedar al corriente
-        porCobrarHoyCentavos: Number(s?.vencidoCentavos ?? 0) + Number(s?.venceHoyCentavos ?? 0) + moraPendienteCentavos,
+        porCobrarHoyCentavos: s.vencidoCentavos + s.venceHoyCentavos + moraPendienteCentavos,
         diasAtraso,
         estado,
         morosidad: nivelMorosidad(diasAtraso),

@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   // RF75: las semanas que vencieron sin pagarse generan su mora al consultarse
   if (datos.nuevas.length) await db.batch(insertarMoras(db, credito.id, datos.nuevas, Date.now()) as [ReturnType<typeof insertarMoras>[number]])
 
-  const [historial, solicitud, renovacion, modelo] = await Promise.all([
+  const [historial, solicitud, renovacion, modelo, corregible] = await Promise.all([
     db
       .select({
         id: operaciones.id,
@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
         moraCentavos: operaciones.moraCentavos,
         saldoResultanteCentavos: operaciones.saldoResultanteCentavos,
         motivo: operaciones.motivo,
+        operacionCorregidaId: operaciones.operacionCorregidaId,
         registradoPorNombre: usuarios.nombre,
         registradoEn: operaciones.registradoEn,
       })
@@ -47,7 +48,10 @@ export default defineEventHandler(async (event) => {
       .orderBy(desc(solicitudes.creadoEn))
       .get(),
     db.query.modelosCredito.findFirst({ where: eq(modelosCredito.id, credito.modeloId) }),
+    actor.rol === 'gerente' ? operacionCorregible(db, credito.id) : null, // RF72
   ])
+  const docs = await listaDocumentos(db, documentosDelCredito(credito.id, credito.solicitudId))
+  const corregidas = new Set(historial.map((o) => o.operacionCorregidaId).filter(Boolean))
 
   const pagadas = semanasPagadas(datos.calendario)
   return {
@@ -68,6 +72,8 @@ export default defineEventHandler(async (event) => {
     semanasParaRenovar: modelo?.semanasParaRenovar ?? 0,
     creditoAnterior: solicitud?.tipo === 'renovacion' && solicitud.anteriorId ? { id: solicitud.anteriorId, folio: solicitud.anteriorFolio! } : null,
     renovacion: renovacion ?? null,
-    operaciones: historial,
+    operacionCorregibleId: corregible,
+    documentos: docs,
+    operaciones: historial.map((o) => ({ ...o, corregida: corregidas.has(o.id) })),
   }
 })

@@ -10,7 +10,10 @@ const [{ data: cliente, error: errorCliente }, { data: modelos }] = await Promis
   useFetch('/api/modelos', { default: () => [] }),
 ])
 
-const opciones = computed(() => modelos.value.filter((m) => m.activo).map((m) => ({ label: m.nombre, value: m.id })))
+// RF27: solo los modelos activos que el Cobrador del cliente tiene asignados (todos si no tiene ninguno)
+const opciones = computed(() => modelos.value
+  .filter((m) => m.activo && (!cliente.value?.modelosPermitidos || cliente.value.modelosPermitidos.includes(m.id)))
+  .map((m) => ({ label: m.nombre, value: m.id })))
 const estado = ref({
   clienteId,
   modeloId: undefined as string | undefined,
@@ -64,7 +67,7 @@ async function enviar() {
         v-else-if="opciones.length === 0"
         color="warning"
         variant="subtle"
-        description="No hay modelos de crédito activos. El Administrador debe crear uno en Modelos."
+        description="No hay modelos de crédito activos para el Cobrador de este cliente. El Administrador los crea en Modelos y el Gerente los asigna en la ficha del Cobrador."
       />
 
       <UForm v-else :schema="esquemaSolicitud" :state="estado" class="space-y-4" @submit="enviar">

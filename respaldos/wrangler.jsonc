@@ -23,5 +23,9 @@
     { "binding": "DB", "database_name": "financiera", "database_id": "7335738d-0e91-407b-a9c6-b291c3d8d313" }
   ],
   // Bucket privado exclusivo para respaldos; los de más de 12 semanas los borra una regla de R2 (RF120)
-  "r2_buckets": [{ "binding": "RESPALDOS", "bucket_name": "financiera-respaldos" }]
+  "r2_buckets": [
+    { "binding": "RESPALDOS", "bucket_name": "financiera-respaldos" },
+    // RF118: el respaldo copia los documentos nuevos de los clientes
+    { "binding": "DOCUMENTOS", "bucket_name": "financiera-documentos" }
+  ]
 }

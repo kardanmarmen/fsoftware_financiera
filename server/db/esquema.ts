@@ -371,6 +371,47 @@ export const moras = sqliteTable(
   ],
 )
 
+// RF17–RF23 (diseño 2.1, sección 3.7): documentos del cliente. El archivo está en R2 (bucket privado
+// financiera-documentos); aquí solo qué es y dónde está. Nunca se reemplazan ni se borran (RF19).
+// A diferencia del diseño, la solicitud y el crédito son opcionales: la identificación y el comprobante
+// de domicilio son del cliente y sirven para varias solicitudes.
+export const TIPOS_DOCUMENTO = [
+  'identificacion',
+  'comprobante_domicilio',
+  'solicitud_firmada',
+  'contrato_firmado',
+  'evidencia_desembolso',
+  'comprobante_liquidacion',
+  'otro',
+] as const
+
+export const documentos = sqliteTable(
+  'documentos',
+  {
+    id: text('id').primaryKey(),
+    clienteId: text('cliente_id').notNull().references(() => clientes.id),
+    solicitudId: text('solicitud_id').references(() => solicitudes.id), // RF18
+    creditoId: text('credito_id').references(() => creditos.id), // RF20: se liga al aprobarse la solicitud
+    tipo: text('tipo', { enum: TIPOS_DOCUMENTO }).notNull(),
+    claveArchivo: text('clave_archivo').notNull().unique(), // ubicación en R2
+    nombreArchivo: text('nombre_archivo').notNull(),
+    tipoMime: text('tipo_mime').notNull(),
+    tamanoBytes: integer('tamano_bytes').notNull(),
+    subidoPor: text('subido_por').notNull().references(() => usuarios.id),
+    subidoEn: integer('subido_en').notNull(),
+  },
+  (t) => [
+    index('idx_documentos_cliente').on(t.clienteId, t.subidoEn),
+    index('idx_documentos_solicitud').on(t.solicitudId),
+    index('idx_documentos_credito').on(t.creditoId),
+    check(
+      'tipo_documento_valido',
+      sql`${t.tipo} IN ('identificacion', 'comprobante_domicilio', 'solicitud_firmada', 'contrato_firmado', 'evidencia_desembolso', 'comprobante_liquidacion', 'otro')`,
+    ),
+    check('tamano_documento_positivo', sql`${t.tamanoBytes} > 0`),
+  ],
+)
+
 export const ESTADOS_RESPALDO = ['en_proceso', 'correcto', 'fallido'] as const
 
 // RF117–RF121: registro de cada respaldo automático (lo escribe el Worker respaldos/)

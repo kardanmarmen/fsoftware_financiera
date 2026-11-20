@@ -67,6 +67,13 @@ function imprimir() {
         <dd>{{ c.registradoPorNombre }}</dd>
       </dl>
 
+      <UAlert
+        v-if="c.corregidaPor"
+        color="error"
+        variant="subtle"
+        :description="`Esta operación fue corregida (anulada) con la operación ${c.corregidaPor}.`"
+        class="mb-4"
+      />
       <div class="rounded-md bg-elevated p-4 mb-6 print:bg-transparent print:border print:border-default">
         <template v-if="c.tipo === 'desembolso'">
           <p class="text-sm text-muted">{{ c.renovacion ? 'Monto del crédito' : 'Monto entregado al cliente' }}</p>
@@ -82,6 +89,17 @@ function imprimir() {
             Total a pagar: {{ formatearDinero(c.saldoResultanteCentavos) }}. Primer pago el
             {{ formatearFechaCorta(sumarDias(c.credito.fechaDesembolso, 7)) }}.
           </p>
+        </template>
+        <template v-else-if="c.tipo === 'correccion'">
+          <!-- RF72: la corrección revierte una operación anterior -->
+          <p class="text-sm text-muted">Monto revertido de {{ c.corrige }}</p>
+          <p class="text-3xl font-semibold">{{ formatearDinero(c.montoCentavos) }}</p>
+          <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm mt-2">
+            <dt class="text-muted">Motivo</dt>
+            <dd>{{ c.motivo }}</dd>
+            <dt class="text-muted">Saldo después de corregir</dt>
+            <dd class="font-medium">{{ formatearDinero(c.saldoResultanteCentavos) }}</dd>
+          </dl>
         </template>
         <template v-else>
           <p class="text-sm text-muted">Monto recibido</p>
@@ -109,7 +127,7 @@ function imprimir() {
       </div>
 
       <!-- Firmas: el cliente firma de recibido en el desembolso; en los pagos firma quien cobra -->
-      <div class="grid grid-cols-2 gap-8 mt-12 text-center text-sm">
+      <div v-if="c.tipo !== 'correccion'" class="grid grid-cols-2 gap-8 mt-12 text-center text-sm">
         <div>
           <div class="border-t border-default pt-1">{{ c.tipo === 'desembolso' ? 'Recibí: ' : '' }}{{ c.clienteNombre }}</div>
         </div>

@@ -14,5 +14,8 @@ export default defineEventHandler(async (event) => {
     puedeReasignar: actor.rol === 'administrador' && objetivo.rol === 'cobrador',
     puedeRestablecer: actor.rol === 'administrador' && objetivo.rol !== 'administrador',
     puedeEliminar: puedeEliminar(actor, objetivo),
+    // RF27: modelos asignados al Cobrador (null: puede usar todos los activos)
+    modelosAsignados: objetivo.rol === 'cobrador' ? await modelosPermitidos(usarBd(event), objetivo.id) : null,
+    puedeAsignarModelos: objetivo.rol === 'cobrador' && puedeAdministrar(actor, objetivo),
   }
 })

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // RF11, RF15: ficha del cliente. RF14: historial de créditos y solicitudes.
 const route = useRoute()
-const { data: cliente, error } = await useFetch(`/api/clientes/${route.params.id}`)
+const { data: cliente, error, refresh } = await useFetch(`/api/clientes/${route.params.id}`)
+// Los documentos nuevos se ligan a la solicitud pendiente, si hay una (RF18)
+const solicitudPendiente = computed(() => cliente.value?.solicitudes.find((s) => s.estado === 'pendiente')?.id ?? null)
 
 // Aviso de "cambios guardados" que deja la pantalla de edición al regresar
 const guardado = useState<boolean>('cliente-guardado', () => false)
@@ -100,6 +102,19 @@ const COLOR_SOLICITUD = { pendiente: 'warning', aprobada: 'success', rechazada: 
           </p>
         </NuxtLink>
       </div>
+
+      <h2 class="font-medium mb-2">Documentos</h2>
+      <p v-if="solicitudPendiente && cliente.puedeEditar" class="text-sm text-muted mb-2">
+        Los documentos que subas quedan en la solicitud pendiente y pasan al crédito cuando se apruebe.
+      </p>
+      <Documentos
+        :documentos="cliente.documentos"
+        :cliente-id="cliente.id"
+        :puede-subir="cliente.puedeEditar"
+        :solicitud-id="solicitudPendiente"
+        class="mb-6"
+        @subido="refresh()"
+      />
 
       <h2 class="font-medium mb-2">Solicitudes</h2>
       <p v-if="cliente.solicitudes.length === 0" class="text-sm text-muted">Este cliente aún no tiene solicitudes.</p>

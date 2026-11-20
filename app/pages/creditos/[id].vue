@@ -4,7 +4,7 @@ import type { TableColumn } from '@nuxt/ui'
 // RF61, RF63: consulta del crédito: condiciones, saldo, calendario de pagos y operaciones.
 // RF94, RF96: desembolso o cancelación. RF64–RF68: pagos y abonos. RF97–RF99: liquidación.
 // Cada operación lleva a su comprobante (RF100, RF114). RF73–RF79: moras y condonación.
-// RF82–RF87: renovación (el crédito nuevo liquida a este al desembolsarse).
+// RF82–RF87: renovación (el crédito nuevo liquida a este al desembolsarse). RF72: corrección de pagos.
 const route = useRoute()
 const { data: credito, error, refresh } = await useFetch(`/api/creditos/${route.params.id}`)
 
@@ -25,7 +25,7 @@ const ULink = resolveComponent('ULink')
 
 // Ventana abierta: una a la vez. La clave de idempotencia se genera al abrirla: si la conexión
 // falla y se vuelve a enviar, el servidor reconoce el reintento y no duplica la operación (RN-24).
-type Accion = 'desembolso' | 'cancelar' | 'pago' | 'liquidacion' | 'condonar'
+type Accion = 'desembolso' | 'cancelar' | 'pago' | 'liquidacion' | 'condonar' | 'corregir'
 const accion = ref<Accion | null>(null)
 const clave = ref('')
 const datos = ref({ fecha: hoy, monto: undefined as number | undefined, motivo: '' })
@@ -35,8 +35,11 @@ const errorAccion = ref('')
 // Lo que falta de la semana más antigua sin cubrir: el pago que normalmente se espera
 const siguienteSemana = computed(() => credito.value?.calendario.find((s) => s.cubiertoCentavos < s.montoCentavos))
 
-function abrir(a: Accion) {
+const corrigiendo = ref<Operacion | null>(null)
+
+function abrir(a: Accion, operacion?: Operacion) {
   accion.value = a
+  corrigiendo.value = operacion ?? null
   clave.value = crypto.randomUUID()
   errorAccion.value = ''
   const s = siguienteSemana.value
@@ -49,7 +52,14 @@ function cerrar() {
   if (!enviando.value) accion.value = null
 }
 
-const RUTA: Record<Accion, string> = { desembolso: 'desembolso', cancelar: 'cancelar', pago: 'pagos', liquidacion: 'liquidacion', condonar: 'condonar-mora' }
+const RUTA: Record<Accion, string> = {
+  desembolso: 'desembolso',
+  cancelar: 'cancelar',
+  pago: 'pagos',
+  liquidacion: 'liquidacion',
+  condonar: 'condonar-mora',
+  corregir: 'correcciones',
+}
 
 async function enviar() {
   errorAccion.value = ''
@@ -60,6 +70,7 @@ async function enviar() {
       desembolso: { fecha: datos.value.fecha, claveIdempotencia: clave.value },
       cancelar: { motivo: datos.value.motivo },
       condonar: { motivo: datos.value.motivo },
+      corregir: { operacionId: corrigiendo.value?.id, motivo: datos.value.motivo, claveIdempotencia: clave.value },
       pago: { monto: datos.value.monto, claveIdempotencia: clave.value },
       liquidacion: { claveIdempotencia: clave.value },
     }[a]
@@ -80,6 +91,7 @@ const TITULO: Record<Accion, string> = {
   pago: 'Registrar pago',
   liquidacion: 'Liquidar crédito',
   condonar: 'Condonar mora',
+  corregir: 'Corregir operación',
 }
 
 const adeudo = computed(() => (credito.value ? credito.value.saldoCentavos + credito.value.moraPendienteCentavos : 0))
@@ -111,7 +123,8 @@ const columnasOperaciones: TableColumn<Operacion>[] = [
       const o = row.original
       const nombre = NOMBRE_TIPO_OPERACION[o.tipo] ?? o.tipo
       const texto = o.semana ? `${nombre} (semana ${o.semana})` : nombre
-      return o.moraCentavos ? `${texto}, mora ${formatearDinero(o.moraCentavos)}` : texto
+      const conMora = o.moraCentavos ? `${texto}, mora ${formatearDinero(o.moraCentavos)}` : texto
+      return o.corregida ? `${conMora} (corregida)` : conMora
     },
   },
   { accessorKey: 'montoCentavos', header: 'Monto', cell: ({ row }) => formatearDinero(row.original.montoCentavos) },
@@ -120,7 +133,13 @@ const columnasOperaciones: TableColumn<Operacion>[] = [
   {
     id: 'comprobante',
     header: '',
-    cell: ({ row }) => h(ULink, { to: `/comprobantes/${row.original.id}`, class: 'text-primary' }, () => 'Comprobante'),
+    cell: ({ row }) => h('div', { class: 'flex gap-3' }, [
+      h(ULink, { to: `/comprobantes/${row.original.id}`, class: 'text-primary' }, () => 'Comprobante'),
+      // RF72: el Gerente corrige el último pago, abono o liquidación
+      row.original.id === credito.value?.operacionCorregibleId
+        ? h(ULink, { as: 'button', class: 'text-error', onClick: () => abrir('corregir', row.original) }, () => 'Corregir')
+        : null,
+    ]),
   },
 ]
 
@@ -260,6 +279,17 @@ const COLOR_CREDITO = { aprobado: 'info', aceptado: 'success', liquidado: 'neutr
         <p class="text-sm mb-6">Semanas: {{ credito.moras.map((m) => m.semana).join(', ') }}</p>
       </template>
 
+      <h2 class="font-medium mb-2">Documentos</h2>
+      <Documentos
+        :documentos="credito.documentos"
+        :cliente-id="credito.clienteId"
+        :puede-subir="credito.puedeOperar"
+        :credito-id="credito.id"
+        :tipo-inicial="credito.estado === 'aprobado' || credito.estado === 'aceptado' ? 'evidencia_desembolso' : 'otro'"
+        class="mb-6"
+        @subido="refresh()"
+      />
+
       <h2 class="font-medium mb-2">Operaciones</h2>
       <UTable :data="credito.operaciones" :columns="columnasOperaciones" empty="Aún no hay operaciones registradas" />
 
@@ -283,6 +313,18 @@ const COLOR_CREDITO = { aprobado: 'info', aceptado: 'success', liquidado: 'neutr
             <UFormField v-else-if="accion === 'cancelar'" label="Motivo (el cliente no recibió el dinero)" name="motivo">
               <UTextarea v-model="datos.motivo" :rows="3" class="w-full" />
             </UFormField>
+
+            <template v-else-if="accion === 'corregir' && corrigiendo">
+              <p class="text-sm">
+                Se revierte {{ NOMBRE_TIPO_OPERACION[corrigiendo.tipo]?.toLowerCase() }} {{ corrigiendo.folio }} de
+                <strong>{{ formatearDinero(corrigiendo.montoCentavos) }}</strong>: el saldo, las semanas y la mora regresan a como
+                estaban<template v-if="corrigiendo.tipo === 'liquidacion'"> y el crédito vuelve a estar vigente</template>.
+                La operación original se conserva; la corrección queda con su propio comprobante.
+              </p>
+              <UFormField label="Motivo" name="motivo">
+                <UTextarea v-model="datos.motivo" :rows="3" class="w-full" />
+              </UFormField>
+            </template>
 
             <template v-else-if="accion === 'condonar'">
               <p class="text-sm">Se perdona la mora pendiente de <strong>{{ formatearDinero(credito.moraPendienteCentavos) }}</strong>. El saldo del crédito no cambia.</p>
@@ -322,7 +364,7 @@ const COLOR_CREDITO = { aprobado: 'info', aceptado: 'success', liquidado: 'neutr
               type="submit"
               form="form-accion"
               :label="accion === 'cancelar' ? 'Cancelar crédito' : accion === 'condonar' ? 'Condonar mora' : 'Guardar y ver comprobante'"
-              :color="accion === 'cancelar' ? 'error' : 'primary'"
+              :color="accion === 'cancelar' || accion === 'corregir' ? 'error' : 'primary'"
               :loading="enviando"
             />
           </div>
