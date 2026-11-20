@@ -70,7 +70,17 @@ const COLOR_SOLICITUD = { pendiente: 'warning', aprobada: 'success', rechazada: 
         Registrado el {{ formatearFecha(cliente.creadoEn) }} · Última modificación {{ formatearFecha(cliente.actualizadoEn) }}
       </p>
 
-      <h2 class="font-medium mb-2">Créditos</h2>
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <h2 class="font-medium">Créditos</h2>
+        <UButton
+          v-if="cliente.puedeSolicitar"
+          :to="`/clientes/${cliente.id}/solicitud`"
+          icon="i-lucide-file-plus"
+          label="Nueva solicitud"
+          size="sm"
+          class="ml-auto"
+        />
+      </div>
       <p v-if="cliente.creditos.length === 0" class="text-sm text-muted mb-6">Este cliente aún no tiene créditos.</p>
       <div v-else class="space-y-2 mb-6">
         <NuxtLink

@@ -14,7 +14,19 @@ const { user } = useUserSession()
         </p>
         <UButton to="/clientes" label="Abrir" variant="outline" />
       </UCard>
+      <UCard>
+        <h2 class="font-medium">Solicitudes</h2>
+        <p class="text-sm text-muted mb-3">
+          {{ user?.rol === 'gerente' ? 'Aprobación de solicitudes de crédito.' : 'Solicitudes de crédito y su estado.' }}
+        </p>
+        <UButton to="/solicitudes" label="Abrir" variant="outline" />
+      </UCard>
       <template v-if="user?.rol !== 'cobrador'">
+        <UCard>
+          <h2 class="font-medium">Modelos de crédito</h2>
+          <p class="text-sm text-muted mb-3">Interés, plazo y mora de cada tipo de crédito.</p>
+          <UButton to="/modelos" label="Abrir" variant="outline" />
+        </UCard>
         <UCard>
           <h2 class="font-medium">{{ user?.rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios' }}</h2>
           <p class="text-sm text-muted mb-3">Alta, edición y activación de cuentas.</p>

@@ -62,6 +62,15 @@ export const NOMBRE_ACCION: Record<string, string> = {
   contrasena_cambiada: 'Cambio de contraseña',
   cliente_creado: 'Alta de cliente',
   cliente_modificado: 'Modificación de cliente',
+  modelo_creado: 'Alta de modelo de crédito',
+  modelo_modificado: 'Modificación de modelo de crédito',
+  solicitud_creada: 'Solicitud de crédito',
+  solicitud_aprobada: 'Aprobación de solicitud',
+  solicitud_rechazada: 'Rechazo de solicitud',
+  credito_desembolsado: 'Desembolso de crédito',
+  credito_cancelado: 'Cancelación de crédito',
+  pago_registrado: 'Registro de pago',
+  credito_liquidado: 'Liquidación de crédito',
 }
 
 export const NOMBRE_MOTIVO_CIERRE: Record<string, string> = {
