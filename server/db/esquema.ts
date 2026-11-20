@@ -332,6 +332,9 @@ export const operaciones = sqliteTable(
     saldoResultanteCentavos: integer('saldo_resultante_centavos').notNull(), // RF116
     operacionCorregidaId: text('operacion_corregida_id').references((): AnySQLiteColumn => operaciones.id),
     motivo: text('motivo'),
+    // Incremento 4: parte del monto que cubrió moras (el resto se aplicó al saldo). Sin CHECK a propósito:
+    // agregarlo obligaría a reconstruir la tabla en SQLite; la API garantiza 0 ≤ mora ≤ monto.
+    moraCentavos: integer('mora_centavos').notNull().default(0),
     claveIdempotencia: text('clave_idempotencia').notNull().unique(), // RN-24: un reintento no duplica
     registradoPor: text('registrado_por').notNull().references(() => usuarios.id),
     registradoEn: integer('registrado_en').notNull(),
@@ -344,6 +347,27 @@ export const operaciones = sqliteTable(
     ),
     check('correccion_con_original', sql`(${t.tipo} = 'correccion') = (${t.operacionCorregidaId} IS NOT NULL)`),
     check('correccion_con_motivo', sql`${t.tipo} <> 'correccion' OR ${t.motivo} IS NOT NULL`),
+  ],
+)
+
+// RF73–RF79 (Incremento 4): una mora por cada semana que venció sin cubrirse por completo.
+// Se genera al consultar el crédito o al registrar un pago (server/utils/moras.ts), así que nunca
+// se escapa una semana atrasada: toda semana se cubre con un pago, y el pago genera antes las moras.
+export const moras = sqliteTable(
+  'moras',
+  {
+    id: text('id').primaryKey(),
+    creditoId: text('credito_id').notNull().references(() => creditos.id),
+    semana: integer('semana').notNull(),
+    montoCentavos: integer('monto_centavos').notNull(), // mora semanal del crédito
+    pagadoCentavos: integer('pagado_centavos').notNull().default(0),
+    condonadoCentavos: integer('condonado_centavos').notNull().default(0), // RF79: el Gerente la perdona
+    generadaEn: integer('generada_en').notNull(),
+  },
+  (t) => [
+    unique('mora_semana_unica').on(t.creditoId, t.semana),
+    check('mora_positiva', sql`${t.montoCentavos} > 0`),
+    check('mora_cubierta_hasta_monto', sql`${t.pagadoCentavos} >= 0 AND ${t.condonadoCentavos} >= 0 AND ${t.pagadoCentavos} + ${t.condonadoCentavos} <= ${t.montoCentavos}`),
   ],
 )
 

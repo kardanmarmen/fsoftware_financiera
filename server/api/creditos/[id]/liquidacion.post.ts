@@ -1,5 +1,5 @@
-// RF97–RF99: liquidación. El cliente paga todo el saldo pendiente y el crédito queda liquidado
-// (anticipada si es antes del último vencimiento). Genera el comprobante de liquidación (RF100).
+// RF97–RF99: liquidación. El cliente paga todo lo que debe (saldo y mora pendiente) y el crédito queda
+// liquidado (anticipada si es antes del último vencimiento). Genera el comprobante de liquidación (RF100).
 export default defineEventHandler(async (event) => {
   const actor = await requerirUsuario(event, { roles: ['gerente', 'cobrador'] })
   const { credito } = await obtenerCreditoObjetivo(event, actor)
@@ -9,6 +9,7 @@ export default defineEventHandler(async (event) => {
   if (repetida) return { operacionId: repetida } // reintento: ya se guardó (RN-24)
 
   exigirEstado(actor, credito.estado, 'aceptado', 'Solo se liquidan créditos vigentes')
+  const resultado = await ejecutarOperacion(event, await prepararPago(event, actor, credito, 'todo', claveIdempotencia))
   setResponseStatus(event, 201)
-  return await registrarPago(event, actor, credito, credito.saldoCentavos, claveIdempotencia)
+  return resultado
 })

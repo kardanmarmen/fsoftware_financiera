@@ -43,6 +43,13 @@
       "when": 1794973444204,
       "tag": "0005_eliminacion_de_usuarios",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1795212208961,
+      "tag": "0006_moras",
+      "breakpoints": true
     }
   ]
 }

@@ -72,6 +72,7 @@ export const NOMBRE_ACCION: Record<string, string> = {
   credito_cancelado: 'Cancelación de crédito',
   pago_registrado: 'Registro de pago',
   credito_liquidado: 'Liquidación de crédito',
+  mora_condonada: 'Condonación de mora',
 }
 
 export const NOMBRE_MOTIVO_CIERRE: Record<string, string> = {

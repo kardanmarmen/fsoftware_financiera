@@ -23,13 +23,20 @@ metodología incremental.
 | --- | --- |
 | 1. Usuarios, roles y seguridad | ✅ Terminado (1.1 a 1.5) |
 | 2. Base de datos y clientes | ✅ Terminado (2.1 a 2.8) |
-| 3. Solicitudes y aprobación de créditos | 🟡 Modelos, solicitudes, aprobación y rechazo |
-| 4. Pagos, abonos y morosidad | 🟡 Pagos y abonos (faltan moras, alertas y reportes) |
-| 5. Renovaciones y liquidaciones | 🟡 Desembolso, liquidación y comprobantes (faltan renovaciones) |
+| 3. Solicitudes y aprobación de créditos | ✅ Terminado (3.1 a 3.6) |
+| 4. Pagos, abonos y morosidad | ✅ Terminado (4.1 a 4.7) |
+| 5. Renovaciones y liquidaciones | ✅ Terminado (5.1 a 5.6) |
 | 6. Integración, pruebas e implementación | Pendiente |
 
-Documentación de cada incremento en [`docs/`](docs/). El flujo de créditos (solicitud, desembolso,
-pagos, liquidación y comprobantes) está en [docs/incremento-3-5/flujo-de-creditos.md](docs/incremento-3-5/flujo-de-creditos.md).
+Documentación de cada incremento en [`docs/`](docs/):
+
+| Incremento | Diseño | Pruebas |
+| --- | --- | --- |
+| 1 | [1.1 Análisis](docs/incremento-1/1.1-analisis-requisitos-acceso.md), [1.2 Diseño](docs/incremento-1/1.2-diseno-usuarios-roles.md) | — |
+| 2 | [2.1 Base de datos](docs/incremento-2/2.1-diseno-base-de-datos.md), [2.7 Respaldos](docs/incremento-2/2.7-respaldo-de-datos.md) | [2.8](docs/incremento-2/2.8-pruebas-del-modulo.md) |
+| 3 | [3.1 Solicitudes y aprobación](docs/incremento-3/3.1-solicitudes-y-aprobacion.md) | [3.6](docs/incremento-3/3.6-pruebas-del-modulo.md) |
+| 4 | [4.1 Pagos y morosidad](docs/incremento-4/4.1-pagos-y-morosidad.md) | [4.7](docs/incremento-4/4.7-pruebas-del-modulo.md) |
+| 5 | [5.1 Liquidaciones y renovaciones](docs/incremento-5/5.1-liquidaciones-y-renovaciones.md) | [5.6](docs/incremento-5/5.6-pruebas-del-modulo.md) |
 
 ## Desarrollo local
 

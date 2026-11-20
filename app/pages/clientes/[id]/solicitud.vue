@@ -1,5 +1,6 @@
 <script setup lang="ts">
 // RF41, RF42: el Cobrador (o su Gerente) captura una solicitud de crédito para el cliente.
+// RF82: si tiene un crédito vigente que ya puede renovarse, la solicitud es una renovación.
 definePageMeta({ roles: ['gerente', 'cobrador'] })
 
 const route = useRoute()
@@ -51,13 +52,13 @@ async function enviar() {
     <UAlert v-if="errorCliente" color="error" variant="subtle" :description="mensajeDeError(errorCliente)" />
 
     <template v-else-if="cliente">
-      <EncabezadoPagina titulo="Nueva solicitud de crédito" :descripcion="nombreCompleto(cliente)" />
+      <EncabezadoPagina :titulo="cliente.esRenovacion ? 'Renovación de crédito' : 'Nueva solicitud de crédito'" :descripcion="nombreCompleto(cliente)" />
 
       <UAlert
         v-if="!cliente.puedeSolicitar"
         color="warning"
         variant="subtle"
-        description="El cliente ya tiene una solicitud pendiente o un crédito vigente."
+        :description="cliente.motivoNoSolicitar ?? 'No se puede capturar una solicitud para este cliente.'"
       />
       <UAlert
         v-else-if="opciones.length === 0"
@@ -67,6 +68,12 @@ async function enviar() {
       />
 
       <UForm v-else :schema="esquemaSolicitud" :state="estado" class="space-y-4" @submit="enviar">
+        <UAlert
+          v-if="cliente.esRenovacion"
+          color="info"
+          variant="subtle"
+          description="El cliente tiene un crédito vigente. Al desembolsar la renovación, se descuenta lo que debe de ese crédito y recibe la diferencia."
+        />
         <UFormField label="Modelo de crédito" name="modeloId">
           <USelect v-model="estado.modeloId" :items="opciones" placeholder="Elige el modelo" class="w-full" />
           <template v-if="modelo" #help>

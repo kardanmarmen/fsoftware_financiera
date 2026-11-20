@@ -9,6 +9,20 @@ export default defineEventHandler(async (event) => {
   const datos = await leerCuerpo(event, esquemaAprobarSolicitud)
   const db = usarBd(event)
 
+  // RF86: en una renovación, el monto nuevo debe alcanzar para liquidar el crédito anterior
+  if (solicitud.creditoAnteriorId) {
+    const anterior = await db.query.creditos.findFirst({ where: eq(creditos.id, solicitud.creditoAnteriorId) })
+    if (anterior?.estado !== 'aceptado') {
+      throw createError({ statusCode: 409, message: 'El crédito que se renovaba ya no está vigente; rechaza esta solicitud' })
+    }
+    if (datos.montoAprobado <= anterior.saldoCentavos) {
+      throw createError({
+        statusCode: 400,
+        message: `El monto debe ser mayor que el saldo del crédito ${anterior.folio} (${formatearDinero(anterior.saldoCentavos)}), que se liquida con la renovación`,
+      })
+    }
+  }
+
   const calculo = calcularCredito(datos.montoAprobado, datos.tasaInteres, datos.plazoSemanas, datos.fechaDesembolso)
   const ahora = Date.now()
   const creditoId = crypto.randomUUID()

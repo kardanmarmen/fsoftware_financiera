@@ -69,8 +69,15 @@ function imprimir() {
 
       <div class="rounded-md bg-elevated p-4 mb-6 print:bg-transparent print:border print:border-default">
         <template v-if="c.tipo === 'desembolso'">
-          <p class="text-sm text-muted">Monto entregado al cliente</p>
+          <p class="text-sm text-muted">{{ c.renovacion ? 'Monto del crédito' : 'Monto entregado al cliente' }}</p>
           <p class="text-3xl font-semibold">{{ formatearDinero(c.montoCentavos) }}</p>
+          <!-- RF86: en una renovación, parte del monto liquida el crédito anterior -->
+          <dl v-if="c.renovacion" class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm mt-2">
+            <dt class="text-muted">Liquidación de {{ c.renovacion.creditoFolio }}</dt>
+            <dd>− {{ formatearDinero(c.renovacion.montoCentavos) }} (folio {{ c.renovacion.folio }})</dd>
+            <dt class="text-muted">Recibe el cliente</dt>
+            <dd class="font-medium">{{ formatearDinero(c.montoCentavos - c.renovacion.montoCentavos) }}</dd>
+          </dl>
           <p class="text-sm mt-2">
             Total a pagar: {{ formatearDinero(c.saldoResultanteCentavos) }}. Primer pago el
             {{ formatearFechaCorta(sumarDias(c.credito.fechaDesembolso, 7)) }}.
@@ -80,6 +87,12 @@ function imprimir() {
           <p class="text-sm text-muted">Monto recibido</p>
           <p class="text-3xl font-semibold">{{ formatearDinero(c.montoCentavos) }}</p>
           <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm mt-2">
+            <template v-if="c.moraCentavos">
+              <dt class="text-muted">Aplicado a mora</dt>
+              <dd>{{ formatearDinero(c.moraCentavos) }}</dd>
+              <dt class="text-muted">Aplicado al crédito</dt>
+              <dd>{{ formatearDinero(c.montoCentavos - c.moraCentavos) }}</dd>
+            </template>
             <dt class="text-muted">Saldo anterior</dt>
             <dd>{{ formatearDinero(c.saldoAnteriorCentavos) }}</dd>
             <dt class="text-muted">Saldo después del pago</dt>
@@ -88,6 +101,9 @@ function imprimir() {
           <p v-if="c.tipo === 'liquidacion'" class="text-sm font-medium mt-2">
             El crédito {{ c.credito.folio }} queda liquidado<template v-if="c.credito.tipoLiquidacion === 'anticipada'"> (liquidación anticipada)</template>.
             El cliente no tiene adeudo por este crédito.
+          </p>
+          <p v-if="c.tipo === 'liquidacion' && c.renovacion" class="text-sm mt-1">
+            Liquidado con la renovación {{ c.renovacion.creditoFolio }} (desembolso {{ c.renovacion.folio }}).
           </p>
         </template>
       </div>

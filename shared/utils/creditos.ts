@@ -145,3 +145,60 @@ export function aplicarPago(calendario: Semana[], montoCentavos: number) {
     semana: cambios[0]?.semana ?? null,
   }
 }
+
+interface Mora { semana: number, montoCentavos: number, pagadoCentavos: number, condonadoCentavos: number }
+
+/** Lo que falta pagar de una mora. */
+export const moraPendiente = (m: Mora) => m.montoCentavos - m.pagadoCentavos - m.condonadoCentavos
+
+/**
+ * Un pago cubre primero las moras pendientes, de la más antigua a la más reciente (RF76);
+ * lo que sobra se aplica a las semanas con `aplicarPago`.
+ */
+export function aplicarAMoras(moras: Mora[], montoCentavos: number) {
+  let resto = montoCentavos
+  const cambios: { semana: number, pagadoCentavos: number }[] = []
+  for (const m of [...moras].sort((a, b) => a.semana - b.semana)) {
+    if (resto === 0) break
+    const aplica = Math.min(moraPendiente(m), resto)
+    if (aplica === 0) continue
+    resto -= aplica
+    cambios.push({ semana: m.semana, pagadoCentavos: m.pagadoCentavos + aplica })
+  }
+  return { cambios, aplicadoCentavos: montoCentavos - resto }
+}
+
+/** RF83: semanas completamente pagadas (para saber si ya puede renovar). */
+export function semanasPagadas(calendario: { montoCentavos: number, cubiertoCentavos: number }[]) {
+  return calendario.filter((s) => s.cubiertoCentavos >= s.montoCentavos).length
+}
+
+/** RF73, RF74: días de atraso desde el vencimiento más antiguo sin cubrir (0 si está al corriente). */
+export function diasDeAtraso(vencimientoMasAntiguo: string | null | undefined, hoy: string) {
+  if (!vencimientoMasAntiguo || vencimientoMasAntiguo >= hoy) return 0
+  return Math.round((Date.parse(`${hoy}T00:00:00Z`) - Date.parse(`${vencimientoMasAntiguo}T00:00:00Z`)) / 86_400_000)
+}
+
+// RF79: el Gerente condona (perdona) la mora pendiente de un crédito, con motivo
+export const esquemaCondonarMora = z.object({ motivo })
+
+// Reportes (RF80, RF88, RF97–RF103): rango de fechas AAAA-MM-DD
+export const esquemaRangoFechas = z
+  .object({ desde: fecha, hasta: fecha })
+  .refine((f) => f.desde <= f.hasta, { message: 'La fecha "desde" debe ser anterior o igual a "hasta"' })
+
+// RF77, RF78: nivel de morosidad según los días de atraso
+export const NIVELES_MOROSIDAD = {
+  al_corriente: 'Al corriente',
+  atraso: 'Atraso (1 a 7 días)',
+  moroso: 'Moroso (8 a 29 días)',
+  cartera_vencida: 'Cartera vencida (30 días o más)',
+} as const
+export type NivelMorosidad = keyof typeof NIVELES_MOROSIDAD
+
+export function nivelMorosidad(diasAtraso: number): NivelMorosidad {
+  if (diasAtraso <= 0) return 'al_corriente'
+  if (diasAtraso < 8) return 'atraso'
+  if (diasAtraso < 30) return 'moroso'
+  return 'cartera_vencida'
+}

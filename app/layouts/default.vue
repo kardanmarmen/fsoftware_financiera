@@ -5,11 +5,15 @@ const { user, fetch: actualizarSesion } = useUserSession()
 const enlaces = computed(() => {
   const rol = user.value?.rol
   const clientes = { label: 'Clientes', to: '/clientes', icon: 'i-lucide-contact' }
+  const cobranza = { label: 'Cobranza', to: '/cobranza', icon: 'i-lucide-calendar-clock' }
   const solicitudes = { label: 'Solicitudes', to: '/solicitudes', icon: 'i-lucide-file-text' }
-  if (rol !== 'administrador' && rol !== 'gerente') return [clientes, solicitudes]
+  const reportes = { label: 'Reportes', to: '/reportes', icon: 'i-lucide-chart-column' }
+  if (rol !== 'administrador' && rol !== 'gerente') return [clientes, cobranza, solicitudes, reportes]
   return [
     clientes,
+    cobranza,
     solicitudes,
+    reportes,
     { label: 'Modelos', to: '/modelos', icon: 'i-lucide-percent' },
     { label: rol === 'gerente' ? 'Mis Cobradores' : 'Usuarios', to: '/usuarios', icon: 'i-lucide-users' },
     { label: 'Bitácora', to: '/bitacora', icon: 'i-lucide-scroll-text' },

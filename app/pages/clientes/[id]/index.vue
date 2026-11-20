@@ -75,8 +75,8 @@ const COLOR_SOLICITUD = { pendiente: 'warning', aprobada: 'success', rechazada: 
         <UButton
           v-if="cliente.puedeSolicitar"
           :to="`/clientes/${cliente.id}/solicitud`"
-          icon="i-lucide-file-plus"
-          label="Nueva solicitud"
+          :icon="cliente.esRenovacion ? 'i-lucide-refresh-cw' : 'i-lucide-file-plus'"
+          :label="cliente.esRenovacion ? 'Renovar crédito' : 'Nueva solicitud'"
           size="sm"
           class="ml-auto"
         />

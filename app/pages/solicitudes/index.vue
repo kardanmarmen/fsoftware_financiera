@@ -4,7 +4,8 @@
 const { user } = useUserSession()
 const esGerente = computed(() => user.value?.rol === 'gerente')
 
-const filtro = ref<'pendiente' | 'aprobada' | 'rechazada' | ''>('pendiente')
+const route = useRoute()
+const filtro = ref<'pendiente' | 'aprobada' | 'rechazada' | ''>(route.query.estado === 'aprobada' ? 'aprobada' : 'pendiente')
 const { data: solicitudes, refresh, error: errorLista } = await useFetch('/api/solicitudes', {
   query: computed(() => ({ estado: filtro.value || undefined })),
   default: () => [],
@@ -114,6 +115,7 @@ async function rechazar() {
         <div class="flex flex-wrap items-center gap-2">
           <NuxtLink :to="`/clientes/${s.clienteId}`" class="font-medium hover:underline">{{ s.clienteNombre }}</NuxtLink>
           <UBadge :label="NOMBRE_ESTADO_SOLICITUD[s.estado]" :color="COLOR_SOLICITUD[s.estado]" variant="subtle" />
+          <UBadge v-if="s.tipo === 'renovacion'" label="Renovación" color="info" variant="outline" />
           <span class="ml-auto font-medium">{{ formatearDinero(s.montoAprobadoCentavos ?? s.montoSolicitadoCentavos) }}</span>
         </div>
         <p class="text-sm text-muted mt-1">
@@ -125,7 +127,14 @@ async function rechazar() {
           <template v-if="s.ocupacion && s.ingresoSemanalCentavos"> · </template>
           <template v-if="s.ingresoSemanalCentavos">Ingreso semanal {{ formatearDinero(s.ingresoSemanalCentavos) }}</template>
         </p>
+        <p v-if="s.creditoAnteriorFolio" class="text-sm text-muted">
+          Renueva {{ s.creditoAnteriorFolio }}<template v-if="s.estado === 'pendiente'">, saldo actual {{ formatearDinero(s.creditoAnteriorSaldoCentavos) }}</template>
+        </p>
         <p v-if="s.motivo" class="text-sm text-muted">Motivo: {{ s.motivo }}</p>
+        <div v-if="s.creditoId" class="flex flex-wrap items-center gap-2 mt-2">
+          <UBadge v-if="s.creditoEstado === 'aprobado'" label="Por desembolsar" color="info" variant="subtle" />
+          <UButton :to="`/creditos/${s.creditoId}`" label="Ver crédito" size="sm" variant="outline" />
+        </div>
         <div v-if="esGerente && s.estado === 'pendiente'" class="flex gap-2 mt-2">
           <UButton label="Aprobar" icon="i-lucide-check" size="sm" @click="abrirAprobacion(s)" />
           <UButton label="Rechazar" icon="i-lucide-x" size="sm" color="error" variant="outline" @click="abrirRechazo(s)" />
@@ -160,6 +169,11 @@ async function rechazar() {
             <strong>{{ formatearDinero(vistaPrevia.pagoSemanalCentavos) }}</strong><template
               v-if="vistaPrevia.calendario.at(-1)!.montoCentavos !== vistaPrevia.pagoSemanalCentavos"
             >; el último de {{ formatearDinero(vistaPrevia.calendario.at(-1)!.montoCentavos) }}</template>.
+          </p>
+          <p v-if="aprobando?.creditoAnteriorFolio && aprobacion.montoAprobado" class="text-sm sm:col-span-2">
+            Renovación: al desembolsar se liquida {{ aprobando.creditoAnteriorFolio }}
+            (saldo {{ formatearDinero(aprobando.creditoAnteriorSaldoCentavos) }}, más la mora que tenga) y el cliente recibe
+            alrededor de <strong>{{ formatearDinero(Math.round(aprobacion.montoAprobado * 100) - (aprobando.creditoAnteriorSaldoCentavos ?? 0)) }}</strong>.
           </p>
           <UAlert v-if="error" color="error" variant="subtle" :description="error" class="sm:col-span-2" />
         </UForm>
