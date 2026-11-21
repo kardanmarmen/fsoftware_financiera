@@ -4,8 +4,9 @@
 //   1. Registra el respaldo en la tabla `respaldos` como "en_proceso".
 //   2. Pide a la API de D1 que exporte la base de datos completa (archivo .sql).
 //   3. Espera a que la exportación esté lista y la guarda en R2, separada de la base (RF121).
-//   4. Copia los documentos de los clientes subidos desde el último respaldo correcto (RF118).
-//   5. Marca el respaldo como "correcto" o, si algo falló, como "fallido" con el error.
+//   4. Copia íntegra de los documentos de los clientes (bucket DOCUMENTOS) a documentos/<fecha>/ (RF118).
+//   5. Marca el respaldo como "correcto" y deja en la bitácora cuántos documentos y bytes se copiaron;
+//      si algo falló (también la copia de documentos), lo marca como "fallido" con el error.
 //
 // La exportación la hace Cloudflare: este Worker casi solo espera, así que no gasta CPU.
 // Se publica solo con cada push a main (Workers Builds, carpeta raíz /respaldos).
@@ -34,6 +35,9 @@ interface RespuestaExportacion {
     result?: { signed_url?: string, filename?: string }
   }
 }
+
+// Documentos que copia cada paso (ver "copiar documentos")
+const LOTE_DOCUMENTOS = 20
 
 const espera = (ms: number) => new Promise((resolver) => setTimeout(resolver, ms))
 
@@ -90,39 +94,68 @@ export class FlujoRespaldo extends WorkflowEntrypoint<Env> {
         },
       )
 
-      // RF118: los documentos nunca se reemplazan ni se borran (RF19), así que basta copiar los nuevos.
-      // Se toman los subidos desde que empezó el último respaldo correcto (con un día de margen) y se
-      // guardan en documentos/<misma clave>, fuera de la regla de conservación de 84 días (prefijo d1/).
-      const copiados = await paso.do(
-        'copiar documentos',
-        { retries: { limit: 3, delay: '30 seconds', backoff: 'exponential' }, timeout: '10 minutes' },
-        async () => {
-          const ultimo = await this.env.DB.prepare(
-            "SELECT MAX(iniciado_en) AS desde FROM respaldos WHERE estado = 'correcto'",
-          ).first<{ desde: number | null }>()
-          const desde = (ultimo?.desde ?? 0) - 24 * 60 * 60 * 1000
-          const { results } = await this.env.DB.prepare(
-            'SELECT clave_archivo FROM documentos WHERE subido_en >= ? ORDER BY subido_en',
-          ).bind(desde).all<{ clave_archivo: string }>()
-          let total = 0
-          for (const { clave_archivo: clave } of results) {
-            if (await this.env.RESPALDOS.head(`documentos/${clave}`)) continue // ya copiado (reintento)
-            const objeto = await this.env.DOCUMENTOS.get(clave)
-            if (!objeto) continue
-            // Hasta 10 MB por documento: se copia completo en memoria
-            await this.env.RESPALDOS.put(`documentos/${clave}`, await objeto.arrayBuffer(), { httpMetadata: objeto.httpMetadata })
-            total++
-          }
-          return total
-        },
-      )
-      console.log(`Documentos copiados: ${copiados}`)
+      // RF118: copia íntegra de los documentos, en una carpeta con la misma fecha que el .sql de este
+      // respaldo: d1/2026-10-25-0930.sql ↔ documentos/2026-10-25-0930/clientes/<cliente>/<documento>.
+      // Se copia por lotes de LOTE_DOCUMENTOS objetos, un paso por lote: cada paso hace 1 lista + 2 llamadas
+      // por objeto, dentro del límite de 50 subpeticiones del plan gratuito, y si un lote falla solo se
+      // reintenta ese lote. Los nombres de los pasos son fijos (lote 1, 2, …), como pide Workflows.
+      const prefijo = `documentos/${archivo.clave.slice('d1/'.length, -'.sql'.length)}/`
+      const documentos = { objetos: 0, bytes: 0 }
+      let cursor: string | undefined
+      for (let lote = 1; ; lote++) {
+        const copiado = await paso.do(
+          `copiar documentos (lote ${lote})`,
+          { retries: { limit: 3, delay: '30 seconds', backoff: 'exponential' }, timeout: '10 minutes' },
+          async () => {
+            const lista = await this.env.DOCUMENTOS.list({ limit: LOTE_DOCUMENTOS, cursor })
+            let objetos = 0
+            let bytes = 0
+            for (const { key } of lista.objects) {
+              const original = await this.env.DOCUMENTOS.get(key)
+              if (!original) continue // los documentos no se borran (RF19); por si acaso
+              // Con el MD5 del original, R2 rechaza la copia si el contenido no coincide (copia íntegra).
+              // Se conservan el tipo de archivo y los metadatos.
+              const copia = await this.env.RESPALDOS.put(`${prefijo}${key}`, original.body, {
+                httpMetadata: original.httpMetadata,
+                customMetadata: original.customMetadata,
+                ...(original.checksums.md5 ? { md5: original.checksums.md5 } : {}),
+              })
+              if (copia.size !== original.size) {
+                throw new Error(`La copia de ${key} mide ${copia.size} bytes y el original ${original.size}`)
+              }
+              objetos++
+              bytes += original.size
+            }
+            return { objetos, bytes, cursor: lista.truncated ? lista.cursor : null }
+          },
+        )
+        documentos.objetos += copiado.objetos
+        documentos.bytes += copiado.bytes
+        if (!copiado.cursor) break
+        cursor = copiado.cursor
+      }
 
+      // El resultado y su registro en la bitácora (RNF25, RNF29) se guardan juntos
       await paso.do('registrar resultado', async () => {
-        await this.env.DB.prepare(
-          "UPDATE respaldos SET estado = 'correcto', terminado_en = ?, archivo = ?, tamano_bytes = ? WHERE id = ?",
-        ).bind(Date.now(), archivo.clave, archivo.tamano, id).run()
+        const ahora = Date.now()
+        await this.env.DB.batch([
+          this.env.DB.prepare(
+            "UPDATE respaldos SET estado = 'correcto', terminado_en = ?, archivo = ?, tamano_bytes = ? WHERE id = ?",
+          ).bind(ahora, archivo.clave, archivo.tamano, id),
+          this.env.DB.prepare(
+            "INSERT INTO bitacora (id, accion, entidad, entidad_id, detalle, creado_en) VALUES (?, 'respaldo_completado', 'respaldo', ?, ?, ?)",
+          ).bind(
+            crypto.randomUUID(),
+            id,
+            JSON.stringify({
+              baseDeDatos: { archivo: archivo.clave, bytes: archivo.tamano },
+              documentos: { carpeta: prefijo, ...documentos },
+            }),
+            ahora,
+          ),
+        ])
       })
+      console.log(`Respaldo correcto: ${archivo.clave}; ${documentos.objetos} documentos (${documentos.bytes} bytes) en ${prefijo}`)
     } catch (error) {
       await paso.do('registrar fallo', async () => {
         await this.env.DB.prepare("UPDATE respaldos SET estado = 'fallido', terminado_en = ?, error = ? WHERE id = ?")

@@ -55,6 +55,13 @@ function describirAccion(registro: Registro) {
     const { motivo } = JSON.parse(registro.detalle) as { motivo?: string }
     return motivo ? `${nombre} (${NOMBRE_MOTIVO_CIERRE[motivo] ?? motivo})` : nombre
   }
+  // RF118: cuántos documentos copió el respaldo semanal
+  if (registro.accion === 'respaldo_completado') {
+    const { documentos } = JSON.parse(registro.detalle) as { documentos?: { objetos: number, bytes: number } }
+    if (!documentos) return nombre
+    const mb = (documentos.bytes / 1024 / 1024).toLocaleString('es-MX', { maximumFractionDigits: 1 })
+    return `${nombre} (base de datos y ${documentos.objetos} ${documentos.objetos === 1 ? 'documento' : 'documentos'}, ${mb} MB)`
+  }
   if (registro.accion === 'cliente_modificado') {
     const { despues } = JSON.parse(registro.detalle) as { despues?: Record<string, unknown> }
     const campos = Object.keys(despues ?? {}).map((c) => NOMBRE_CAMPO_CLIENTE[c as CampoCliente] ?? c)
@@ -73,7 +80,9 @@ const columnas: TableColumn<Registro>[] = [
     header: 'Usuario',
     cell: ({ row }) => row.original.usuarioNombre
       ? conMarca(row.original.usuarioNombre, row.original.usuarioEliminado)
-      : `(intento: ${row.original.usuarioIntentado})`,
+      : row.original.usuarioIntentado
+        ? `(intento: ${row.original.usuarioIntentado})`
+        : 'Sistema', // tareas automáticas, como el respaldo semanal
   },
   { accessorKey: 'accion', header: 'Acción', cell: ({ row }) => describirAccion(row.original) },
   {
