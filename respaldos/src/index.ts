@@ -8,6 +8,7 @@
 //   5. Marca el respaldo como "correcto" o, si algo falló, como "fallido" con el error.
 //
 // La exportación la hace Cloudflare: este Worker casi solo espera, así que no gasta CPU.
+// Se publica solo con cada push a main (Workers Builds, carpeta raíz /respaldos).
 // Basado en el ejemplo oficial: https://developers.cloudflare.com/workflows/examples/backup-d1/
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers'
 

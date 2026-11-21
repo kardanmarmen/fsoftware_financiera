@@ -119,7 +119,8 @@ Cada domingo a las 03:30 (hora del centro de México) el Worker `financiera-resp
 de datos completa a R2 y la conserva 12 semanas. El Administrador ve el resultado en **Respaldos**.
 
 - Configuración, recuperación y cómo probarlo: [docs/incremento-2/2.7-respaldo-de-datos.md](docs/incremento-2/2.7-respaldo-de-datos.md).
-- Publicar un cambio en el Worker de respaldos (no se publica solo con la aplicación):
+- El Worker de respaldos se publica solo, igual que la aplicación: Cloudflare (Workers Builds) está
+  conectado al repositorio con la carpeta raíz `/respaldos`, y cada push a `main` lo publica. A mano:
   ```sh
   cd respaldos
   npx wrangler deploy
