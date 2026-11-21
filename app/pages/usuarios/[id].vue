@@ -10,6 +10,29 @@ const id = route.params.id as string
 
 const { data: usuario, refresh, error: errorCarga } = await useFetch(`/api/usuarios/${id}`)
 
+// --- RF27: modelos de crédito que puede usar el Cobrador ---
+const { data: modelos } = await useFetch('/api/modelos', { default: () => [], immediate: usuario.value?.puedeAsignarModelos ?? false })
+const modelosElegidos = ref<string[]>([])
+watchEffect(() => { modelosElegidos.value = [...(usuario.value?.modelosAsignados ?? [])] })
+const guardandoModelos = ref(false)
+async function guardarModelos() {
+  guardandoModelos.value = true
+  try {
+    await $fetch(`/api/usuarios/${id}/modelos`, { method: 'PUT', body: { modeloIds: modelosElegidos.value } })
+    toast.add({ title: 'Modelos guardados', color: 'success' })
+    await refresh()
+  } catch (e) {
+    toast.add({ title: mensajeDeError(e), color: 'error' })
+  } finally {
+    guardandoModelos.value = false
+  }
+}
+function alternarModelo(modeloId: string, marcado: boolean | 'indeterminate') {
+  modelosElegidos.value = marcado === true
+    ? [...modelosElegidos.value, modeloId]
+    : modelosElegidos.value.filter((m) => m !== modeloId)
+}
+
 // --- Editar nombre y usuario ---
 const estado = reactive({ nombre: '', usuario: '' })
 watchEffect(() => {
@@ -162,6 +185,24 @@ async function restablecer() {
           </UFormField>
           <UButton type="submit" label="Guardar cambios" :loading="guardando" />
         </UForm>
+
+        <template v-if="usuario.puedeAsignarModelos">
+          <h2 class="font-medium mb-1">Modelos de crédito</h2>
+          <p class="text-sm text-muted mb-2">
+            Los que puede ofrecer este Cobrador. Si no marcas ninguno, puede usar todos los modelos activos.
+          </p>
+          <div class="space-y-2 mb-3">
+            <UCheckbox
+              v-for="m in modelos"
+              :key="m.id"
+              :model-value="modelosElegidos.includes(m.id)"
+              :label="`${m.nombre} · ${formatearPorcentaje(m.tasaInteresBp)}, ${m.plazoSemanas} semanas${m.activo ? '' : ' (inactivo)'}`"
+              @update:model-value="(v) => alternarModelo(m.id, v)"
+            />
+            <p v-if="modelos.length === 0" class="text-sm text-muted">Aún no hay modelos de crédito.</p>
+          </div>
+          <UButton label="Guardar modelos" variant="outline" :loading="guardandoModelos" class="mb-8" @click="guardarModelos" />
+        </template>
 
         <template v-if="usuario.puedeReasignar">
           <h2 class="font-medium mb-1">Reasignar a otro Gerente</h2>

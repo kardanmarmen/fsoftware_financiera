@@ -77,6 +77,12 @@ export default defineEventHandler(async (event) => {
     renovacion: relacionada ?? null,
     saldoResultanteCentavos: op.saldoResultanteCentavos,
     registradoEn: op.registradoEn,
+    motivo: op.motivo,
+    // RF72: folio de la operación que corrige, o de la corrección que la anuló
+    corrige: op.operacionCorregidaId
+      ? (await usarBd(event).select({ folio: operaciones.folio }).from(operaciones).where(eq(operaciones.id, op.operacionCorregidaId)).get())?.folio ?? null
+      : null,
+    corregidaPor: (await usarBd(event).select({ folio: operaciones.folio }).from(operaciones).where(eq(operaciones.operacionCorregidaId, op.id)).get())?.folio ?? null,
     registradoPorNombre: fila.registradoPorNombre,
     cobradorNombre: fila.cobradorNombre,
     clienteNombre: nombreCompleto(cliente),

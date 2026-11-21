@@ -1,5 +1,5 @@
 import { desc, eq } from 'drizzle-orm'
-import { creditos, solicitudes } from '../../db/esquema'
+import { creditos, documentos, solicitudes } from '../../db/esquema'
 
 // RF11, RF15: ficha del cliente con su Cobrador responsable.
 // RF14: historial de solicitudes y créditos. Los pagos, abonos y moras se consultan en cada crédito (RF63).
@@ -40,7 +40,11 @@ export default defineEventHandler(async (event) => {
       .orderBy(desc(solicitudes.creadoEn)),
   ])
 
-  const revision = await revisarNuevaSolicitud(db, cliente.id)
+  const [revision, permitidos, listaDocs] = await Promise.all([
+    revisarNuevaSolicitud(db, cliente.id),
+    modelosPermitidos(db, cliente.cobradorId),
+    listaDocumentos(db, eq(documentos.clienteId, cliente.id)), // RF17
+  ])
 
   return {
     ...datos,
@@ -51,6 +55,8 @@ export default defineEventHandler(async (event) => {
     puedeSolicitar: puedeEditarCliente(actor) && revision.permitido,
     esRenovacion: revision.permitido && !!revision.creditoAnterior,
     motivoNoSolicitar: revision.permitido ? null : revision.motivo,
+    modelosPermitidos: permitidos, // RF27: null = todos los activos
+    documentos: listaDocs,
     // Los vigentes primero (RF15: créditos activos del cliente)
     creditos: listaCreditos.sort((a, b) => Number(b.estado === 'aceptado') - Number(a.estado === 'aceptado')),
     solicitudes: listaSolicitudes,

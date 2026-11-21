@@ -202,3 +202,75 @@ export function nivelMorosidad(diasAtraso: number): NivelMorosidad {
   if (diasAtraso < 30) return 'moroso'
   return 'cartera_vencida'
 }
+
+// RF72: el Gerente corrige (revierte) un pago mal registrado, con motivo
+export const esquemaCorreccion = z.object({ motivo, claveIdempotencia })
+
+/**
+ * Deshace el reparto de un pago (RF72). Como los pagos se aplican de lo más antiguo a lo más reciente,
+ * revertir el último pago es quitar el monto de lo más reciente hacia atrás: así se devuelven
+ * exactamente las semanas y moras que ese pago cubrió.
+ */
+export function revertirReparto<T extends { semana: number }>(filas: T[], cubierto: (f: T) => number, montoCentavos: number) {
+  let resto = montoCentavos
+  const cambios: { semana: number, valor: number }[] = []
+  for (const f of [...filas].sort((a, b) => b.semana - a.semana)) {
+    if (resto === 0) break
+    const quita = Math.min(cubierto(f), resto)
+    if (quita === 0) continue
+    resto -= quita
+    cambios.push({ semana: f.semana, valor: cubierto(f) - quita })
+  }
+  return { cambios, faltante: resto } // faltante > 0 indicaría datos inconsistentes
+}
+
+// RF17–RF23: documentos. Fotos del celular o PDF de hasta 10 MB.
+export const TIPOS_ARCHIVO_DOCUMENTO = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'] as const
+export const TAMANO_MAXIMO_DOCUMENTO = 10 * 1024 * 1024
+
+export const NOMBRE_TIPO_DOCUMENTO = {
+  identificacion: 'Identificación',
+  comprobante_domicilio: 'Comprobante de domicilio',
+  solicitud_firmada: 'Solicitud firmada',
+  contrato_firmado: 'Contrato firmado',
+  evidencia_desembolso: 'Evidencia del desembolso',
+  comprobante_liquidacion: 'Comprobante de liquidación firmado',
+  otro: 'Otro',
+} as const
+
+// Datos del documento (en la URL); el archivo va en el cuerpo de la petición, tal cual
+export const esquemaSubirDocumento = z.object({
+  tipo: z.enum(Object.keys(NOMBRE_TIPO_DOCUMENTO) as [keyof typeof NOMBRE_TIPO_DOCUMENTO], { error: 'Elige el tipo de documento' }),
+  nombre: z.string().trim().min(1).max(200),
+  solicitudId: z.uuid().optional(),
+  creditoId: z.uuid().optional(),
+})
+
+/**
+ * RF73, RF74: situación de cobro de un crédito vigente calculada solo con sus datos, sin leer el
+ * calendario. Es posible porque las semanas siempre se cubren en orden: los pagos van de la más antigua
+ * en adelante y las correcciones revierten de la más reciente hacia atrás. Así, con lo pagado se sabe
+ * cuántas semanas están completas, y los vencimientos son la fecha de desembolso más 7 días por semana.
+ */
+export function situacionDelCredito(
+  c: { totalCentavos: number, saldoCentavos: number, pagoSemanalCentavos: number, plazoSemanas: number, fechaDesembolso: string },
+  hoy: string,
+) {
+  const { totalCentavos: total, pagoSemanalCentavos: pago, plazoSemanas: plazo } = c
+  const pagado = total - c.saldoCentavos
+  // Lo que suman las primeras n semanas (la última lleva la diferencia del redondeo)
+  const acumulado = (n: number) => (n <= 0 ? 0 : n >= plazo ? total : n * pago)
+  const dias = Math.round((Date.parse(`${hoy}T00:00:00Z`) - Date.parse(`${c.fechaDesembolso}T00:00:00Z`)) / 86_400_000)
+  const limitar = (n: number) => Math.min(plazo, Math.max(0, n))
+  const vencenAntesDeHoy = limitar(Math.ceil(dias / 7) - 1) // semana s vence el día 7·s
+  const vencenHastaHoy = limitar(Math.floor(dias / 7))
+  const completas = pagado >= total ? plazo : pago > 0 ? Math.min(plazo - 1, Math.floor(pagado / pago)) : 0
+  const vencidoCentavos = Math.max(0, acumulado(vencenAntesDeHoy) - pagado)
+  return {
+    semanasCompletas: completas,
+    semanasVencidas: Math.max(0, vencenAntesDeHoy - completas), // las semanas completas + 1 … vencenAntesDeHoy
+    vencidoCentavos,
+    venceHoyCentavos: Math.max(0, acumulado(vencenHastaHoy) - pagado) - vencidoCentavos,
+    proximoVencimiento: completas < plazo ? sumarDias(c.fechaDesembolso, 7 * (completas + 1)) : null,
+  }
+}

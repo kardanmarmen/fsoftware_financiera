@@ -67,10 +67,12 @@ export function folioActual(serie: 'CR' | 'OP') {
 interface NuevaOperacion {
   id: string
   creditoId: string
-  tipo: 'desembolso' | 'pago' | 'abono' | 'liquidacion'
+  tipo: 'desembolso' | 'pago' | 'abono' | 'liquidacion' | 'correccion'
   semana: number | null
   montoCentavos: number
   moraCentavos?: number
+  operacionCorregidaId?: string // solo en correcciones (RF72)
+  motivo?: string
   saldoResultanteCentavos: number
   claveIdempotencia: string
   registradoPor: string
@@ -86,7 +88,7 @@ export function insertarOperacion(event: H3Event, op: NuevaOperacion, condicion:
   return insertarSi(
     usarBd(event),
     operaciones,
-    { moraCentavos: 0, ...op, folio: folioActual('OP'), operacionCorregidaId: null, motivo: null },
+    { moraCentavos: 0, operacionCorregidaId: null, motivo: null, ...op, folio: folioActual('OP') },
     creditos,
     and(eq(creditos.id, op.creditoId), condicion)!,
   )

@@ -26,7 +26,7 @@ metodología incremental.
 | 3. Solicitudes y aprobación de créditos | ✅ Terminado (3.1 a 3.6) |
 | 4. Pagos, abonos y morosidad | ✅ Terminado (4.1 a 4.7) |
 | 5. Renovaciones y liquidaciones | ✅ Terminado (5.1 a 5.6) |
-| 6. Integración, pruebas e implementación | Pendiente |
+| 6. Integración, pruebas e implementación | 🟡 Integración, pruebas, rendimiento y manual listos; falta publicar en producción ([6.6](docs/incremento-6/6.6-implementacion-en-produccion.md)) |
 
 Documentación de cada incremento en [`docs/`](docs/):
 
@@ -37,6 +37,9 @@ Documentación de cada incremento en [`docs/`](docs/):
 | 3 | [3.1 Solicitudes y aprobación](docs/incremento-3/3.1-solicitudes-y-aprobacion.md) | [3.6](docs/incremento-3/3.6-pruebas-del-modulo.md) |
 | 4 | [4.1 Pagos y morosidad](docs/incremento-4/4.1-pagos-y-morosidad.md) | [4.7](docs/incremento-4/4.7-pruebas-del-modulo.md) |
 | 5 | [5.1 Liquidaciones y renovaciones](docs/incremento-5/5.1-liquidaciones-y-renovaciones.md) | [5.6](docs/incremento-5/5.6-pruebas-del-modulo.md) |
+| 6 | [6.4 Manual de usuario](docs/incremento-6/6.4-manual-de-usuario.md), [6.6 Implementación en producción](docs/incremento-6/6.6-implementacion-en-produccion.md) | [6.1 Funcionales](docs/incremento-6/6.1-integracion-y-pruebas-funcionales.md), [6.3 Rendimiento](docs/incremento-6/6.3-pruebas-de-rendimiento.md) |
+
+Las pruebas automáticas están en [`pruebas/`](pruebas/README.md).
 
 ## Desarrollo local
 
@@ -140,5 +143,6 @@ server/              API y acceso a datos
 shared/              Código que usan las páginas y la API (roles, validaciones Zod, formato)
 scripts/             crear-admin.mjs, restablecer-admin.mjs, preparar-respaldo.mjs
 respaldos/           Worker aparte con el respaldo semanal (Workflow + Cron Trigger)
+pruebas/             Pruebas automáticas de la API, de pantalla y de rendimiento
 docs/                Análisis, diseño y pruebas por incremento
 ```
