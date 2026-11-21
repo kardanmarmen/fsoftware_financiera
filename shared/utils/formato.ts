@@ -76,6 +76,7 @@ export const NOMBRE_ACCION: Record<string, string> = {
   operacion_corregida: 'Corrección de operación',
   modelos_asignados: 'Asignación de modelos de crédito',
   documento_subido: 'Documento agregado',
+  respaldo_completado: 'Respaldo semanal',
 }
 
 export const NOMBRE_MOTIVO_CIERRE: Record<string, string> = {
